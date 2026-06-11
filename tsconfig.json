@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "declaration": true,
+    "removeComments": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "esModuleInterop": true, // important for packages that do not directly support CommonJS
+    "allowSyntheticDefaultImports": true,
+    "target": "ES2021",
+    "sourceMap": true,
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "paths": {
+      "controllers/*": ["./src/controllers/*"],
+      "providers/*": ["./src/providers/*"],
+      "models/*": ["./src/models/*"],
+      "middleware/*": ["./src/middleware/*"],
+      "custom/*": ["./src/custom/*"]
+    },
+    "incremental": true,
+    "skipLibCheck": true, // consider toggling if you need to investigate errors coming from within a package
+    "strictNullChecks": true,
+    "noImplicitAny": true,
+    "strictBindCallApply": true,
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "ts-node": {
+    "require": ["tsconfig-paths/register"]
+  }
+}

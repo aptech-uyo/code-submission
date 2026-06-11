@@ -1,0 +1,11 @@
+{
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "autoimport.doubleQuotes": false,
+  "editor.rulers": [110],
+  "editor.tabSize": 2,
+  "[handlebars]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "mfeckies.handlebars-formatter"
+  }
+}

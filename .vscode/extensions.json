@@ -1,0 +1,11 @@
+{
+  "recommendations": [
+    "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint",
+    "steoates.autoimport",
+    "redhat.vscode-yaml",
+    "eamodio.gitlens",
+    "streetsidesoftware.code-spell-checker",
+    "mfeckies.handlebars-formatter"
+  ]
+}

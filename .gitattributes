@@ -1,0 +1,3 @@
+public/css/fonts/* linguist-vendored
+public/fonts/* linguist-vendored
+# TODO: install github-linguist locally and investigate project breakdown https://github.com/github-linguist/linguist/blob/main/Dockerfile
