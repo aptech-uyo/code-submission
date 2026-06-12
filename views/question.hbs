@@ -1,2 +1,10 @@
-{{! This uses Handlebars templates.}}
-{{> (concat 'questions/' questionId)}}
+{{#>base}}
+{{#*inline 'content'}}
+
+
+{{! This uses Handlebars partials.}}
+{{> (lookup . 'questionId')}}
+
+
+{{/inline}}
+{{/base}}
