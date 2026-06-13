@@ -38,10 +38,25 @@ export class Submission extends Base {
 
   @Column()
   codeText!: string
+
+  /**
+   * You can cascade all actions on submission executions from within the `Submission` entity.
+   */
+  @OneToMany(() => Execution, (execution) => execution.submission, { cascade: true })
+  executions!: Execution[]
 }
 
 @Entity()
 export class Execution extends Base {
+  @Column({})
+  submissionId!: number
+
+  @ManyToOne(() => Submission, (submission) => submission.executions, {
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE'
+  })
+  submission!: Submission
+
   @Column()
   status!: 'SUCCESS' | 'COMPILE_ERROR' | 'RUNTIME_ERROR' | 'WRONG_OUTPUT'
 }
