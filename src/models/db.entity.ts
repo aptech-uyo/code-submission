@@ -23,11 +23,17 @@ export class Question extends Base {
    */
   @OneToMany(() => Submission, (submission) => submission.question, { cascade: true })
   submissions!: Submission[]
+
+  @Column()
+  inputLineCount!: number
+
+  @Column()
+  outputLineCount!: number
 }
 
 @Entity()
 export class Submission extends Base {
-  @Column({})
+  @Column()
   questionId!: number
 
   @ManyToOne(() => Question, (question) => question.submissions, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })

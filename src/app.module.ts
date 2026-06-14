@@ -14,7 +14,6 @@ import { OrmConfigService } from './orm-config.service'
       useClass: OrmConfigService,
       extraProviders: [AppService]
     })
-    // TypeOrmModule.forFeature([Student, Question, Submission, Execution])
   ],
   controllers: [AppController],
   providers: [AppService]
