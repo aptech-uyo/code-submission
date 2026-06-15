@@ -33,14 +33,11 @@ export class Submission extends Base {
   @ManyToOne(() => Question, (question) => question.submissions, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
   question!: Question
 
-  @Column({ nullable: true })
-  studentId?: number
-
-  @ManyToOne(() => Student, (student) => student.submissions, { onDelete: 'SET NULL', onUpdate: 'CASCADE', nullable: true })
-  student?: Student
-
   @Column()
-  studentName!: string
+  studentId!: number
+
+  @ManyToOne(() => Student, (student) => student.submissions, { onDelete: 'SET NULL', onUpdate: 'CASCADE' })
+  student!: Student
 
   @Column()
   language!: 'C' | 'PY' | 'JAVA' | 'JS'
