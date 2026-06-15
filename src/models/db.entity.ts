@@ -9,18 +9,18 @@ export class Student extends Base {
   @Column()
   firstName!: string
 
-  @Column()
+  @Column({ nullable: true })
   middleName?: string
 
   @Column()
   lastName!: string
+
+  @OneToMany(() => Submission, (submission) => submission.student, { cascade: true })
+  submissions!: Submission[]
 }
 
 @Entity()
 export class Question extends Base {
-  /**
-   * You can cascade all actions on question submissions from within the `Question` entity.
-   */
   @OneToMany(() => Submission, (submission) => submission.question, { cascade: true })
   submissions!: Submission[]
 
@@ -40,21 +40,24 @@ export class Submission extends Base {
   question!: Question
 
   @Column()
-  language!: 'C' | 'PY' | 'JAVA' | 'JS'
+  studentId!: number
+
+  @ManyToOne(() => Student, (student) => student.submissions, { onDelete: 'SET NULL', onUpdate: 'CASCADE' })
+  student!: Student
 
   @Column()
+  language!: 'C' | 'PY' | 'JAVA' | 'JS'
+
+  @Column({ type: 'text' })
   codeText!: string
 
-  /**
-   * You can cascade all actions on submission executions from within the `Submission` entity.
-   */
   @OneToMany(() => Execution, (execution) => execution.submission, { cascade: true })
   executions!: Execution[]
 }
 
 @Entity()
 export class Execution extends Base {
-  @Column({})
+  @Column()
   submissionId!: number
 
   @ManyToOne(() => Submission, (submission) => submission.executions, {
@@ -64,5 +67,11 @@ export class Execution extends Base {
   submission!: Submission
 
   @Column()
-  status!: 'SUCCESS' | 'COMPILE_ERROR' | 'RUNTIME_ERROR' | 'WRONG_OUTPUT'
+  status!: 'ACCEPTED' | 'WRONG_ANSWER' | 'COMPILE_ERROR' | 'RUNTIME_ERROR' | 'TIME_LIMIT_EXCEEDED'
+
+  @Column({ type: 'text', nullable: true })
+  output?: string
+
+  @Column({ type: 'text', nullable: true })
+  errorMessage?: string
 }

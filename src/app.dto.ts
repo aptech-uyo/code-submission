@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsNumber } from 'class-validator'
+import { IsIn, IsNotEmpty, IsNumber, IsString } from 'class-validator'
 
 export interface Page {
   pageTitle: string
@@ -13,23 +13,29 @@ export interface QuestionPage extends CsrfProtectedPage {
 }
 
 export interface SubmissionsPage extends Page {
-  submissions: SubmissionReportDto[]
+  submissions: SubmitCodeDto[]
 }
-export class SubmissionResponseDto {
+
+export class SubmitCodeDto {
   @IsNumber()
   studentId!: number
 
+  @IsString()
+  @IsIn(['C', 'PY', 'JAVA', 'JS'])
+  language!: 'C' | 'PY' | 'JAVA' | 'JS'
+
+  @IsString()
   @IsNotEmpty()
   codeText!: string
 }
 
-interface SubmissionReportDto {
+interface LeaderboardEntry {
   submissionId: number
   studentId: number
   executionId: number
   studentName: string
   language: string
-  latestStatus: 'SUCCESS' | 'COMPILE_ERROR' | 'RUNTIME_ERROR' | 'WRONG_OUTPUT'
+  latestStatus: 'ACCEPTED' | 'WRONG_ANSWER' | 'COMPILE_ERROR' | 'RUNTIME_ERROR' | 'TIME_LIMIT_EXCEEDED'
 }
 
 export const SESSION_COOKIE_NAME = 'connect.sid'

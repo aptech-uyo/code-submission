@@ -1,14 +1,141 @@
 {{#>base}}
 {{#*inline 'content'}}
 
+<div style="display:flex; gap:2rem; align-items:flex-start;">
 
-{{! This uses Handlebars partials.}}
-{{> (lookup . 'questionId')}}
+  {{! Left: problem statement }}
+  <div style="flex:1; min-width:0;">
+    <h1 style="font-size:1.6rem; font-weight:800; margin-bottom:0.25rem;">{{question.id}}. {{question.title}}</h1>
+    <p style="color:var(--text-muted); margin-bottom:1.5rem; font-size:0.9rem;">
+      ⏱ {{question.timeLimit}} &nbsp;|&nbsp; 💾 {{question.memoryLimit}}
+    </p>
 
-<form action="." method="post">
-  <input type="hidden" name="_csrf" value="{{ csrfToken }}">
-</form>
+    <div class="card" style="margin-bottom:1rem;">
+      <p style="line-height:1.8;">{{question.statement}}</p>
+    </div>
 
+    <div class="card" style="margin-bottom:1rem;">
+      <h3 style="margin-bottom:0.5rem;">Input Format</h3>
+      <p style="line-height:1.8;">{{question.inputFormat}}</p>
+    </div>
+
+    <div class="card" style="margin-bottom:1rem;">
+      <h3 style="margin-bottom:0.5rem;">Output Format</h3>
+      <p style="line-height:1.8;">{{question.outputFormat}}</p>
+    </div>
+
+    <div class="card" style="margin-bottom:1rem;">
+      <h3 style="margin-bottom:0.75rem;">Examples</h3>
+      <div id="examples"></div>
+    </div>
+  </div>
+
+  {{! Right: submit panel }}
+  <div style="width:380px; flex-shrink:0;">
+    <div class="card" style="position:sticky; top:100px;">
+      <h2 style="font-size:1.1rem; margin-bottom:1rem;">Submit Solution</h2>
+
+      <label style="display:block; margin-bottom:0.75rem;">
+        <span style="font-size:0.85rem; color:var(--text-muted);">Your Name</span>
+        <input id="studentName" type="text" placeholder="e.g. Jane Doe"
+          style="width:100%; margin-top:4px; padding:0.5rem 0.75rem; background:var(--bg);
+                 border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:0.95rem;" />
+      </label>
+
+      <label style="display:block; margin-bottom:0.75rem;">
+        <span style="font-size:0.85rem; color:var(--text-muted);">Language</span>
+        <select id="language"
+          style="width:100%; margin-top:4px; padding:0.5rem 0.75rem; background:var(--bg);
+                 border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:0.95rem;">
+          <option value="PY">Python</option>
+          <option value="JS">JavaScript</option>
+          <option value="C">C</option>
+          <option value="JAVA">Java</option>
+        </select>
+      </label>
+
+      <label style="display:block; margin-bottom:0.75rem;">
+        <span style="font-size:0.85rem; color:var(--text-muted);">Paste Code</span>
+        <textarea id="codeText" rows="12" placeholder="// your solution here"
+          style="width:100%; margin-top:4px; padding:0.5rem 0.75rem; background:var(--code-bg);
+                 border:1px solid var(--border); border-radius:6px; color:var(--text);
+                 font-family:monospace; font-size:0.88rem; resize:vertical;"></textarea>
+      </label>
+
+      <div style="margin-bottom:1rem;">
+        <span style="font-size:0.85rem; color:var(--text-muted);">Or upload a file</span>
+        <input id="codeFile" type="file" accept=".py,.js,.c,.java"
+          style="display:block; margin-top:4px; color:var(--text-muted); font-size:0.85rem;" />
+      </div>
+
+      <button id="submitBtn" class="btn btn-primary" style="width:100%;">🚀 Submit</button>
+
+      <div id="result" style="margin-top:1rem; display:none;"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Render examples
+  const examples = {{{question.examplesJson}}};
+  const container = document.getElementById('examples');
+  examples.forEach((ex, i) => {
+    container.innerHTML += `
+      <div style="margin-bottom:1rem;">
+        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.4rem;">Example ${i+1}</p>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem;">
+          <div><p style="font-size:0.8rem;color:var(--text-muted);">Input</p><pre>${ex.input}</pre></div>
+          <div><p style="font-size:0.8rem;color:var(--text-muted);">Output</p><pre>${ex.output}</pre></div>
+        </div>
+        ${ex.explanation ? `<p style="margin-top:0.4rem;font-size:0.85rem;color:var(--text-muted);">${ex.explanation}</p>` : ''}
+      </div>`;
+  });
+
+  // Submit handler
+  document.getElementById('submitBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('submitBtn');
+    const resultDiv = document.getElementById('result');
+    btn.disabled = true;
+    btn.textContent = '⏳ Running...';
+    resultDiv.style.display = 'none';
+
+    const formData = new FormData();
+    formData.append('_csrf', '{{csrfToken}}');
+    formData.append('questionId', '{{question.id}}');
+    formData.append('studentName', document.getElementById('studentName').value);
+    formData.append('language', document.getElementById('language').value);
+
+    const file = document.getElementById('codeFile').files[0];
+    if (file) {
+      formData.append('codeFile', file);
+    } else {
+      formData.append('codeText', document.getElementById('codeText').value);
+    }
+
+    try {
+      const res = await fetch('/submit', { method: 'POST', body: formData });
+      const data = await res.json();
+
+      const statusColor = data.status === 'ACCEPTED' ? 'var(--success)' : 'var(--error)';
+      resultDiv.innerHTML = `
+        <div class="card" style="border-left:4px solid ${statusColor};">
+          <p style="font-weight:700; color:${statusColor}; margin-bottom:0.5rem;">${data.status}</p>
+          <p style="font-size:0.85rem; color:var(--text-muted);">
+            Passed: ${data.passedCases} / ${data.totalCases}
+          </p>
+          ${data.output ? `<pre style="margin-top:0.5rem;font-size:0.8rem;">${data.output}</pre>` : ''}
+          ${data.errorMessage ? `<pre style="margin-top:0.5rem;font-size:0.8rem;color:var(--error);">${data.errorMessage}</pre>` : ''}
+        </div>`;
+      resultDiv.style.display = 'block';
+    } catch (e) {
+      resultDiv.innerHTML = '<p style="color:var(--error);">Network error. Try again.</p>';
+      resultDiv.style.display = 'block';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '🚀 Submit';
+    }
+  });
+</script>
 
 {{/inline}}
 {{/base}}

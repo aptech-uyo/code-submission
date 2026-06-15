@@ -1,3 +1,4 @@
+import { ValidationPipe } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { NestFactory } from '@nestjs/core'
 import { NestExpressApplication } from '@nestjs/platform-express'
@@ -41,7 +42,15 @@ async function bootstrap() {
   hbsUtils(hbs).registerWatchedPartials(join(__dirname, '..', 'views', 'layouts'))
   hbsUtils(hbs).registerWatchedPartials(join(__dirname, '..', 'views', '_questions'))
 
-  await app.listen(3000)
+  // Register Handlebars helpers
+  hbs.registerHelper('json', (context: any) => JSON.stringify(context))
+  hbs.registerHelper('eq', (a: any, b: any) => a === b)
+  hbs.registerHelper('add', (a: number, b: number) => a + b)
+
+  app.useGlobalPipes(new ValidationPipe({ transform: true }))
+
+  const port = process.env.APP_PORT ?? 3000
+  await app.listen(port)
 }
 
 bootstrap()
