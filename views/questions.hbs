@@ -1,0 +1,31 @@
+{{#>base}}
+{{#*inline 'content'}}
+
+<h1 style="font-size:1.8rem; font-weight:800; margin-bottom:0.25rem;">Problem Set</h1>
+<p style="color:var(--text-muted); margin-bottom:2rem;">Select a problem to view details and submit your solution.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width:60px;">#</th>
+      <th>Problem Title</th>
+      <th style="width:140px;">Time Limit</th>
+      <th style="width:160px;">Memory Limit</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{#each questions}}
+    <tr>
+      <td style="font-weight:700; color:var(--accent);">{{id}}</td>
+      <td>
+        <a href="/question/{{id}}" style="font-weight:600; font-size:1rem;">{{title}}</a>
+      </td>
+      <td style="color:var(--text-muted);">{{timeLimit}}</td>
+      <td style="color:var(--text-muted);">{{memoryLimit}}</td>
+    </tr>
+    {{/each}}
+  </tbody>
+</table>
+
+{{/inline}}
+{{/base}}

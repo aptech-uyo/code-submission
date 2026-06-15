@@ -3,17 +3,9 @@ import { ConfigService } from '@nestjs/config'
 import { TypeOrmModuleOptions, TypeOrmOptionsFactory } from '@nestjs/typeorm'
 import { join } from 'path'
 
-import { AppService } from './app.service'
-
-/**
- *  This is the ORM config to be used within the NestJS application.
- */
 @Injectable()
 export class OrmConfigService implements TypeOrmOptionsFactory {
-  constructor(
-    private configService: ConfigService,
-    private appService: AppService
-  ) {}
+  constructor(private configService: ConfigService) {}
 
   createTypeOrmOptions(): TypeOrmModuleOptions {
     return {
@@ -22,7 +14,7 @@ export class OrmConfigService implements TypeOrmOptionsFactory {
       entities: [join(__dirname, '**', '*.entity{.ts,.js}')],
       migrations: [join(__dirname, '**', 'migrations', '*{.ts,.js}')],
       migrationsRun: true,
-      synchronize: this.appService.syncOrm,
+      synchronize: this.configService.get('SYNC_ORM') === 'true',
       isolateWhereStatements: true
     }
   }
