@@ -5,6 +5,10 @@
 {{! This uses Handlebars partials.}}
 {{> (lookup . 'questionId')}}
 
+<form action="." method="post">
+  <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+</form>
+
 
 {{/inline}}
 {{/base}}
