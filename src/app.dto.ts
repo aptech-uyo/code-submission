@@ -1,4 +1,4 @@
-import { IsIn, IsNotEmpty, IsNumber, IsString } from 'class-validator'
+import { IsIn, IsNotEmpty } from 'class-validator'
 
 export interface Page {
   pageTitle: string
@@ -17,14 +17,12 @@ export interface SubmissionsPage extends Page {
 }
 
 export class SubmitCodeDto {
-  @IsNumber()
+  @IsNotEmpty()
   studentId!: number
 
-  @IsString()
   @IsIn(['C', 'PY', 'JAVA', 'JS'])
   language!: 'C' | 'PY' | 'JAVA' | 'JS'
 
-  @IsString()
   @IsNotEmpty()
   codeText!: string
 }

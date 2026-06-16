@@ -9,11 +9,13 @@ import {
   Req,
   Res,
   UploadedFile,
-  UseInterceptors
+  UseInterceptors,
+  ValidationPipe
 } from '@nestjs/common'
 import { FileInterceptor } from '@nestjs/platform-express'
 import { Request, Response } from 'express'
 import * as multer from 'multer'
+
 import { Page, SubmitCodeDto } from './app.dto'
 import { AppService } from './app.service'
 
@@ -42,11 +44,12 @@ export class AppController {
     }
   }
 
-  @Get('question/:id')
+  @Get('questions/:id')
   @Render('question')
-  getQuestion(@Param('id') id: string, @Req() req: Request) {
-    const question = this.appService.getQuestion(Number(id))
+  async getQuestion(@Param('id') id: number, @Req() req: Request) {
+    const question = this.appService.getQuestion(id)
     if (!question) throw new NotFoundException('Question not found')
+
     return {
       pageTitle: `Problem ${question.id}: ${question.title}`,
       question: {
@@ -54,11 +57,12 @@ export class AppController {
         constraintsJson: JSON.stringify(question.constraints),
         examplesJson: JSON.stringify(question.examples)
       },
+      students: await this.appService.getStudents(),
       csrfToken: req.csrfToken!()
     }
   }
 
-  @Post('submit')
+  @Post('questions/:id')
   @UseInterceptors(
     FileInterceptor('codeFile', {
       storage: multer.memoryStorage(),
@@ -66,25 +70,21 @@ export class AppController {
     })
   )
   async submitCode(
-    @Body() body: any,
+    @Param('id') id: number,
+    @Body(new ValidationPipe({ expectedType: SubmitCodeDto, whitelist: true, forbidNonWhitelisted: true }))
+    body: SubmitCodeDto,
     @UploadedFile() file: Express.Multer.File | undefined,
     @Res() res: Response
   ) {
+    const question = this.appService.getQuestion(id)
+    if (!question) throw new NotFoundException('Question not found')
+
     const codeText = file ? file.buffer.toString('utf8') : body.codeText
-
-    if (!codeText || !codeText.trim()) {
+    if (!codeText || !codeText.trim())
       return res.status(400).json({ error: 'No code provided. Either paste code or upload a file.' })
-    }
-
-    const dto: SubmitCodeDto = {
-      questionId: Number(body.questionId),
-      studentName: body.studentName?.trim() || 'Anonymous',
-      language: body.language,
-      codeText
-    }
 
     try {
-      const { result } = await this.appService.submitCode(dto)
+      const { result } = await this.appService.submitCode(question, body)
       return res.json({
         status: result.status,
         output: result.output,
@@ -93,6 +93,7 @@ export class AppController {
         totalCases: result.totalCases
       })
     } catch (e: any) {
+      console.error(e)
       return res.status(500).json({ error: e.message })
     }
   }
@@ -104,7 +105,7 @@ export class AppController {
     const grouped: Record<string, any> = {}
 
     for (const sub of submissions) {
-      const key = sub.studentName
+      const key = `${sub.student.firstName} ${sub.student.lastName}`
       if (!grouped[key]) grouped[key] = { name: key, questions: {}, totalPassed: 0 }
       const accepted = sub.executions?.some((e) => e.status === 'ACCEPTED')
       if (!grouped[key].questions[sub.questionId]) {

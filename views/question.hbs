@@ -37,9 +37,13 @@
 
       <label style="display:block; margin-bottom:0.75rem;">
         <span style="font-size:0.85rem; color:var(--text-muted);">Your Name</span>
-        <input id="studentName" type="text" placeholder="e.g. Jane Doe"
+        <select id="studentId"
           style="width:100%; margin-top:4px; padding:0.5rem 0.75rem; background:var(--bg);
-                 border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:0.95rem;" />
+                 border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:0.95rem;">
+          {{#each students as | student |}}
+          <option value="{{student.id}}">{{student.name}}</option>
+          {{/each}}
+        </select>
       </label>
 
       <label style="display:block; margin-bottom:0.75rem;">
@@ -100,9 +104,7 @@
     resultDiv.style.display = 'none';
 
     const formData = new FormData();
-    formData.append('_csrf', '{{csrfToken}}');
-    formData.append('questionId', '{{question.id}}');
-    formData.append('studentName', document.getElementById('studentName').value);
+    formData.append('studentId', Number(document.getElementById('studentId').value));
     formData.append('language', document.getElementById('language').value);
 
     const file = document.getElementById('codeFile').files[0];
@@ -113,7 +115,11 @@
     }
 
     try {
-      const res = await fetch('/submit', { method: 'POST', body: formData });
+      const res = await fetch(window.location.href, {
+        method: 'POST',
+        headers: { 'X-Csrf-Token': '{{csrfToken}}' },
+        body: formData
+      });
       const data = await res.json();
 
       const statusColor = data.status === 'ACCEPTED' ? 'var(--success)' : 'var(--error)';
