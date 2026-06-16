@@ -1,5 +1,12 @@
-import { Column, Entity, ManyToOne, OneToMany } from 'typeorm'
-import { Base } from './base.entity'
+import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
+
+abstract class Base {
+  @PrimaryGeneratedColumn()
+  id!: number
+
+  @Column({ type: 'datetime', default: () => 'CURRENT_TIMESTAMP' })
+  createdAt!: Date
+}
 
 @Entity()
 export class Student extends Base {
