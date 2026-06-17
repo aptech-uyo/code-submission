@@ -3,14 +3,15 @@ import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 
 import { Execution, Student, Submission } from 'models/db.entity'
-import { ExecutorService } from 'models/executor.service'
 import { QuestionData, QUESTIONS } from 'models/questions.data'
+import { ExecutionResult } from 'runner/runner.dto'
+import { RunnerService } from 'runner/runner.service'
 import { SubmitCodeDto } from './app.dto'
 
 @Injectable()
 export class AppService {
   constructor(
-    private readonly executorService: ExecutorService,
+    private readonly runnerService: RunnerService,
     @InjectRepository(Student)
     private readonly studentRepo: Repository<Student>,
     @InjectRepository(Submission)
@@ -32,20 +33,20 @@ export class AppService {
     return QUESTIONS.find((q) => q.id === id) ?? null
   }
 
-  async submitCode(question: QuestionData, data: SubmitCodeDto) {
-    // Save submission
+  async submitCode(question: QuestionData, data: SubmitCodeDto): Promise<Submission> {
     const submission = this.submissionRepo.create({
       questionId: question.id,
       studentId: data.studentId,
       language: data.language,
       codeText: data.codeText
     })
-    await this.submissionRepo.save(submission)
+    return await this.submissionRepo.save(submission)
+  }
 
-    // Run code against test cases
-    const result = await this.executorService.runCode(data.language, data.codeText, question.testCases)
+  async runSubmission(submission: Submission): Promise<ExecutionResult> {
+    const question = this.getQuestion(submission.questionId)!
+    const result = this.runnerService.runCode(submission.codeText, submission.language, question.testCases)
 
-    // Save execution record
     const execution = this.executionRepo.create({
       submissionId: submission.id,
       status: result.status,
@@ -54,7 +55,7 @@ export class AppService {
     })
     await this.executionRepo.save(execution)
 
-    return { submission, execution, result }
+    return result
   }
 
   async getLeaderboard() {

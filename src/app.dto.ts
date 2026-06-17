@@ -16,12 +16,20 @@ export interface SubmissionsPage extends Page {
   submissions: SubmitCodeDto[]
 }
 
+export type Language = 'C' | 'PY' | 'JAVA' | 'JS'
+export type ExecutionStatus =
+  | 'ACCEPTED'
+  | 'WRONG_ANSWER'
+  | 'COMPILE_ERROR'
+  | 'RUNTIME_ERROR'
+  | 'TIME_LIMIT_EXCEEDED'
+
 export class SubmitCodeDto {
   @IsNotEmpty()
   studentId!: number
 
   @IsIn(['C', 'PY', 'JAVA', 'JS'])
-  language!: 'C' | 'PY' | 'JAVA' | 'JS'
+  language!: Language
 
   @IsNotEmpty()
   codeText!: string
@@ -33,8 +41,9 @@ interface LeaderboardEntry {
   executionId: number
   studentName: string
   language: string
-  latestStatus: 'ACCEPTED' | 'WRONG_ANSWER' | 'COMPILE_ERROR' | 'RUNTIME_ERROR' | 'TIME_LIMIT_EXCEEDED'
+  latestStatus: ExecutionStatus
 }
 
 export const SESSION_COOKIE_NAME = 'connect.sid'
 export const CSRF_HEADER_NAME = 'X-Csrf-Token'
+export const MAX_SOURCE_FILE_SIZE = 512 * 1024 // 512KB

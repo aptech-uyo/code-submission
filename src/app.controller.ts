@@ -2,26 +2,31 @@ import {
   Body,
   Controller,
   Get,
+  Logger,
   NotFoundException,
   Param,
   Post,
   Render,
   Req,
-  Res,
   UploadedFile,
   UseInterceptors,
   ValidationPipe
 } from '@nestjs/common'
 import { FileInterceptor } from '@nestjs/platform-express'
-import { Request, Response } from 'express'
+import { Request } from 'express'
 import * as multer from 'multer'
 
-import { Page, SubmitCodeDto } from './app.dto'
+import { ExecutionResult } from 'runner/runner.dto'
+import { MAX_SOURCE_FILE_SIZE, Page, SubmitCodeDto } from './app.dto'
 import { AppService } from './app.service'
 
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  private readonly logger
+
+  constructor(private readonly appService: AppService) {
+    this.logger = new Logger(AppController.name)
+  }
 
   @Get()
   @Render('index')
@@ -66,36 +71,39 @@ export class AppController {
   @UseInterceptors(
     FileInterceptor('codeFile', {
       storage: multer.memoryStorage(),
-      limits: { fileSize: 512 * 1024 } // 512KB max
+      limits: { fileSize: MAX_SOURCE_FILE_SIZE }
     })
   )
   async submitCode(
     @Param('id') id: number,
     @Body(new ValidationPipe({ expectedType: SubmitCodeDto, whitelist: true, forbidNonWhitelisted: true }))
     body: SubmitCodeDto,
-    @UploadedFile() file: Express.Multer.File | undefined,
-    @Res() res: Response
-  ) {
+    @UploadedFile() file: Express.Multer.File | undefined
+  ): Promise<ExecutionResult> {
     const question = this.appService.getQuestion(id)
     if (!question) throw new NotFoundException('Question not found')
 
     const codeText = file ? file.buffer.toString('utf8') : body.codeText
-    if (!codeText || !codeText.trim())
-      return res.status(400).json({ error: 'No code provided. Either paste code or upload a file.' })
+    if (codeText == null || codeText.trim() == null)
+      throw new NotFoundException('No code provided. Either paste code or upload a file.')
 
+    let submission
     try {
-      const { result } = await this.appService.submitCode(question, body)
-      return res.json({
-        status: result.status,
-        output: result.output,
-        errorMessage: result.errorMessage,
-        passedCases: result.passedCases,
-        totalCases: result.totalCases
-      })
-    } catch (e: any) {
-      console.error(e)
-      return res.status(500).json({ error: e.message })
+      submission = await this.appService.submitCode(question, body)
+    } catch (error) {
+      this.logger.error(`Could not submit code for question with ID "${id}"`)
+      throw error
     }
+
+    let result
+    try {
+      result = await this.appService.runSubmission(submission)
+    } catch (error) {
+      this.logger.error(`Could not run code for question with ID "${id}"`)
+      throw error
+    }
+
+    return result
   }
 
   @Get('leaderboard')

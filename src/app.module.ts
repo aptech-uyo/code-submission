@@ -3,7 +3,7 @@ import { ConfigModule } from '@nestjs/config'
 import { TypeOrmModule } from '@nestjs/typeorm'
 
 import { Execution, Student, Submission } from 'models/db.entity'
-import { ExecutorService } from 'models/executor.service'
+import { RunnerService } from 'runner/runner.service'
 import { AppController } from './app.controller'
 import { AppService } from './app.service'
 import { OrmConfigService } from './orm-config.service'
@@ -18,6 +18,6 @@ import { OrmConfigService } from './orm-config.service'
     TypeOrmModule.forFeature([Student, Submission, Execution])
   ],
   controllers: [AppController],
-  providers: [AppService, ExecutorService]
+  providers: [AppService, RunnerService]
 })
 export class AppModule {}

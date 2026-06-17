@@ -12,9 +12,8 @@
     "sourceMap": true,
     "outDir": "./dist",
     "paths": {
-      "controllers/*": ["./src/controllers/*"],
-      "providers/*": ["./src/providers/*"],
       "models/*": ["./src/models/*"],
+      "runner/*": ["./src/runner/*"],
       "middleware/*": ["./src/middleware/*"],
       "custom/*": ["./src/custom/*"]
     },

@@ -13,9 +13,9 @@ describe('AppController', () => {
   })
 
   describe('getIndex', () => {
-    it('should be the "Home" page', () => {
+    it('should be the home page', () => {
       const appController = app.get(AppController)
-      expect(appController.getIndex()).toHaveProperty('pageTitle', 'Home')
+      expect(appController.getIndex()).toHaveProperty('pageTitle', 'Welcome')
     })
   })
 })

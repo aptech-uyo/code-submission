@@ -1,4 +1,5 @@
 import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
+import { ExecutionStatus, Language } from '../app.dto'
 
 abstract class Base {
   @PrimaryGeneratedColumn()
@@ -53,7 +54,7 @@ export class Submission extends Base {
   student!: Student
 
   @Column()
-  language!: 'C' | 'PY' | 'JAVA' | 'JS'
+  language!: Language
 
   @Column({ type: 'text' })
   codeText!: string
@@ -74,7 +75,7 @@ export class Execution extends Base {
   submission!: Submission
 
   @Column()
-  status!: 'ACCEPTED' | 'WRONG_ANSWER' | 'COMPILE_ERROR' | 'RUNTIME_ERROR' | 'TIME_LIMIT_EXCEEDED'
+  status!: ExecutionStatus
 
   @Column({ type: 'text', nullable: true })
   output?: string
