@@ -131,7 +131,9 @@
   <nav class="navbar">
     <a href="/" class="brand"><img src="/assets/logo.png" alt="CodeComp" style="height:32px; vertical-align:middle;" /></a>
     <a href="/">Instructions</a>
+    {{#if competitionStarted}}
     <a href="/questions">Problems</a>
+    {{/if}}
     <a href="/leaderboard">Leaderboard</a>
   </nav>
   <div class="timer-bar">
@@ -164,6 +166,8 @@
         : `${m}:${String(s).padStart(2,'0')}`;
     }
 
+    let hasStarted = Date.now() >= COMP_START;
+
     function tick() {
       const now = Date.now();
 
@@ -175,6 +179,14 @@
         el.className = '';
         fill.style.width = '100%';
         fill.style.background = '#2196f3';
+        return;
+      }
+
+      // If we got here, it means we are at or past start time.
+      // If we hadn't started yet when this page was loaded, reload the page.
+      if (!hasStarted) {
+        hasStarted = true;
+        location.reload();
         return;
       }
 

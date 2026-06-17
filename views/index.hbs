@@ -15,8 +15,7 @@
   <div class="card" style="margin-bottom:1.5rem; border-left: 4px solid #0f9b8e;">
     <h2 style="margin-bottom:1rem; font-size:1.1rem;">Questions</h2>
     <ul style="padding-left:1.2rem; line-height:2;">
-      <li>There are <strong>2 questions</strong> available. You are expected to answer <strong>at least one</strong>.</li>
-      <li>You may attempt both questions for a higher score.</li>
+      <li>There are <strong>2 questions</strong> available. You are expected to attempt <strong>both</strong>.</li>
       <li>Click on a question title to see the full problem statement.</li>
     </ul>
   </div>
@@ -55,9 +54,15 @@
   </div>
 
   <div style="text-align:center;">
+    {{#if competitionStarted}}
     <a href="/questions" class="btn btn-primary" style="font-size:1.1rem; padding:0.75rem 2.5rem;">
       View Problems &rarr;
     </a>
+    {{else}}
+    <span class="btn" style="font-size:1.1rem; padding:0.75rem 2.5rem; background:var(--border); color:var(--text-muted); cursor:not-allowed;">
+      Competition Not Started
+    </span>
+    {{/if}}
   </div>
 </div>
 

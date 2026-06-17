@@ -57,7 +57,8 @@ export class AppController {
   private getTimerData() {
     return {
       competitionStartTime: this.competitionStartTime,
-      competitionDurationMinutes: this.competitionDurationMinutes
+      competitionDurationMinutes: this.competitionDurationMinutes,
+      competitionStarted: this.hasCompetitionStarted()
     }
   }
 
@@ -69,6 +70,13 @@ export class AppController {
     return now >= start && now < end
   }
 
+  /** Check whether the competition has started */
+  private hasCompetitionStarted(): boolean {
+    const start = new Date(this.competitionStartTime).getTime()
+    const now = Date.now()
+    return now >= start
+  }
+
   @Get()
   @Render('index')
   getIndex(): Page & Record<string, any> {
@@ -78,6 +86,9 @@ export class AppController {
   @Get('questions')
   @Render('questions')
   async getQuestions() {
+    if (!this.hasCompetitionStarted()) {
+      throw new ForbiddenException('The competition has not started yet.')
+    }
     const questions = await this.appService.getQuestions()
     return {
       pageTitle: 'Questions',
@@ -94,6 +105,9 @@ export class AppController {
   @Get('questions/:id')
   @Render('question')
   async getQuestion(@Param('id') id: number, @Req() req: Request): Promise<QuestionPage> {
+    if (!this.hasCompetitionStarted()) {
+      throw new ForbiddenException('The competition has not started yet.')
+    }
     const question = await this.appService.getQuestion(id)
     if (!question) throw new NotFoundException('Question not found')
 
@@ -178,10 +192,11 @@ export class AppController {
       const key = `${sub.student.firstName} ${sub.student.lastName}`
       if (!grouped[key]) grouped[key] = { name: key, questions: {}, totalPassed: 0, firstAcceptedAt: null }
       
-      const accepted = sub.acceptedAt != null || sub.executions?.some((e) => e.status === 'ACCEPTED')
+      const acceptedExecution = sub.executions?.find((e) => e.status === 'ACCEPTED')
+      const accepted = !!acceptedExecution
       
       if (accepted) {
-        const time = sub.acceptedAt ? new Date(sub.acceptedAt).getTime() : new Date(sub.createdAt).getTime()
+        const time = new Date(acceptedExecution.createdAt).getTime()
         if (!grouped[key].firstAcceptedAt || time < grouped[key].firstAcceptedAt) {
           grouped[key].firstAcceptedAt = time
         }
