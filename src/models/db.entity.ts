@@ -75,6 +75,9 @@ export class Submission extends Base {
   @Column({ type: 'text' })
   codeText!: string
 
+  @Column({ type: 'datetime', nullable: true })
+  acceptedAt?: Date
+
   @OneToMany(() => Execution, (execution) => execution.submission, { cascade: true })
   executions!: Execution[]
 }

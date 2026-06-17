@@ -176,8 +176,17 @@ export class AppController {
 
     for (const sub of submissions) {
       const key = `${sub.student.firstName} ${sub.student.lastName}`
-      if (!grouped[key]) grouped[key] = { name: key, questions: {}, totalPassed: 0 }
-      const accepted = sub.executions?.some((e) => e.status === 'ACCEPTED')
+      if (!grouped[key]) grouped[key] = { name: key, questions: {}, totalPassed: 0, firstAcceptedAt: null }
+      
+      const accepted = sub.acceptedAt != null || sub.executions?.some((e) => e.status === 'ACCEPTED')
+      
+      if (accepted) {
+        const time = sub.acceptedAt ? new Date(sub.acceptedAt).getTime() : new Date(sub.createdAt).getTime()
+        if (!grouped[key].firstAcceptedAt || time < grouped[key].firstAcceptedAt) {
+          grouped[key].firstAcceptedAt = time
+        }
+      }
+
       if (!grouped[key].questions[sub.questionId]) {
         grouped[key].questions[sub.questionId] = accepted ? 'ACCEPTED' : 'ATTEMPTED'
         if (accepted) grouped[key].totalPassed++
@@ -187,7 +196,14 @@ export class AppController {
       }
     }
 
-    const rows = Object.values(grouped).sort((a: any, b: any) => b.totalPassed - a.totalPassed)
+    const rows = Object.values(grouped).sort((a: any, b: any) => {
+      if (a.firstAcceptedAt && b.firstAcceptedAt) {
+        return a.firstAcceptedAt - b.firstAcceptedAt
+      }
+      if (a.firstAcceptedAt) return -1
+      if (b.firstAcceptedAt) return 1
+      return b.totalPassed - a.totalPassed
+    })
     return { pageTitle: 'Leaderboard', rows: JSON.stringify(rows), ...this.getTimerData() }
   }
 }

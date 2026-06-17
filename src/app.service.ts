@@ -52,6 +52,11 @@ export class AppService {
     })
     await this.executionRepo.save(execution)
 
+    if (result.status === 'ACCEPTED' && !submission.acceptedAt) {
+      submission.acceptedAt = new Date()
+      await this.submissionRepo.save(submission)
+    }
+
     return result
   }
 
