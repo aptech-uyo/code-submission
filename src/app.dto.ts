@@ -42,11 +42,11 @@ export interface QuestionExample {
 export interface QuestionDetailsDto {
   id: number
   title: string
-  statement: string // HTML
-  inputFormat: string // HTML
-  outputFormat: string // HTML
-  constraintList: string[] // HTML[]
-  examplesJson: string // JSON-stringified QuestionExample[]
+  statement: string
+  inputFormat: string 
+  outputFormat: string 
+  constraintList: string[] 
+  examplesJson: string 
 }
 
 export class SubmitCodeDto {
@@ -71,4 +71,4 @@ interface LeaderboardEntry {
 
 export const SESSION_COOKIE_NAME = 'connect.sid'
 export const CSRF_HEADER_NAME = 'X-Csrf-Token'
-export const MAX_SOURCE_FILE_SIZE = 512 * 1024 // 512KB
+export const MAX_SOURCE_FILE_SIZE = 512 * 1024 

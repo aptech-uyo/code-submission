@@ -57,7 +57,8 @@ export class AppController {
   private getTimerData() {
     return {
       competitionStartTime: this.competitionStartTime,
-      competitionDurationMinutes: this.competitionDurationMinutes
+      competitionDurationMinutes: this.competitionDurationMinutes,
+      competitionStarted: this.hasCompetitionStarted()
     }
   }
 
@@ -69,6 +70,13 @@ export class AppController {
     return now >= start && now < end
   }
 
+  /** Check whether the competition has started */
+  private hasCompetitionStarted(): boolean {
+    const start = new Date(this.competitionStartTime).getTime()
+    const now = Date.now()
+    return now >= start
+  }
+
   @Get()
   @Render('index')
   getIndex(): Page & Record<string, any> {
@@ -78,6 +86,9 @@ export class AppController {
   @Get('questions')
   @Render('questions')
   async getQuestions() {
+    if (!this.hasCompetitionStarted()) {
+      throw new ForbiddenException('The competition has not started yet.')
+    }
     const questions = await this.appService.getQuestions()
     return {
       pageTitle: 'Questions',
@@ -94,6 +105,9 @@ export class AppController {
   @Get('questions/:id')
   @Render('question')
   async getQuestion(@Param('id') id: number, @Req() req: Request): Promise<QuestionPage> {
+    if (!this.hasCompetitionStarted()) {
+      throw new ForbiddenException('The competition has not started yet.')
+    }
     const question = await this.appService.getQuestion(id)
     if (!question) throw new NotFoundException('Question not found')
 
@@ -176,8 +190,18 @@ export class AppController {
 
     for (const sub of submissions) {
       const key = `${sub.student.firstName} ${sub.student.lastName}`
-      if (!grouped[key]) grouped[key] = { name: key, questions: {}, totalPassed: 0 }
-      const accepted = sub.executions?.some((e) => e.status === 'ACCEPTED')
+      if (!grouped[key]) grouped[key] = { name: key, questions: {}, totalPassed: 0, firstAcceptedAt: null }
+      
+      const acceptedExecution = sub.executions?.find((e) => e.status === 'ACCEPTED')
+      const accepted = !!acceptedExecution
+      
+      if (accepted) {
+        const time = new Date(acceptedExecution.createdAt).getTime()
+        if (!grouped[key].firstAcceptedAt || time < grouped[key].firstAcceptedAt) {
+          grouped[key].firstAcceptedAt = time
+        }
+      }
+
       if (!grouped[key].questions[sub.questionId]) {
         grouped[key].questions[sub.questionId] = accepted ? 'ACCEPTED' : 'ATTEMPTED'
         if (accepted) grouped[key].totalPassed++
@@ -187,7 +211,14 @@ export class AppController {
       }
     }
 
-    const rows = Object.values(grouped).sort((a: any, b: any) => b.totalPassed - a.totalPassed)
+    const rows = Object.values(grouped).sort((a: any, b: any) => {
+      if (a.firstAcceptedAt && b.firstAcceptedAt) {
+        return a.firstAcceptedAt - b.firstAcceptedAt
+      }
+      if (a.firstAcceptedAt) return -1
+      if (b.firstAcceptedAt) return 1
+      return b.totalPassed - a.totalPassed
+    })
     return { pageTitle: 'Leaderboard', rows: JSON.stringify(rows), ...this.getTimerData() }
   }
 }
