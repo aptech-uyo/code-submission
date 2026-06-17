@@ -42,13 +42,13 @@ export class Question extends Base {
   @Column()
   outputFormatStatement!: string
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ type: 'json', nullable: true })
   constraintList?: string[]
 
-  @Column({ type: 'text' })
+  @Column({ type: 'json' })
   examples!: QuestionExample[]
 
-  @Column({ type: 'text' })
+  @Column({ type: 'json' })
   testCases!: TestCase[]
 
   @OneToMany(() => Submission, (submission) => submission.question, { cascade: true })
