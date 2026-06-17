@@ -1,4 +1,8 @@
 {{#>base}}
+{{#*inline 'optionalStylesheets'}}
+<link rel="stylesheet" href="/css/katex.min.css">
+<link rel="stylesheet" href="/css/googlecode.min.css">
+{{/inline}}
 {{#*inline 'content'}}
 
 <div style="display:flex; gap:2rem; align-items:flex-start;">
@@ -6,22 +10,26 @@
   {{! Left: problem statement }}
   <div style="flex:1; min-width:0;">
     <h1 style="font-size:1.6rem; font-weight:800; margin-bottom:0.25rem;">{{question.id}}. {{question.title}}</h1>
-    <p style="color:var(--text-muted); margin-bottom:1.5rem; font-size:0.9rem;">
-      ⏱ {{question.timeLimit}} &nbsp;|&nbsp; 💾 {{question.memoryLimit}}
-    </p>
 
     <div class="card" style="margin-bottom:1rem;">
-      <p style="line-height:1.8;">{{question.statement}}</p>
+      <p style="line-height:1.8;">{{{question.statement}}}</p>
     </div>
 
     <div class="card" style="margin-bottom:1rem;">
       <h3 style="margin-bottom:0.5rem;">Input Format</h3>
-      <p style="line-height:1.8;">{{question.inputFormat}}</p>
+      <p style="line-height:1.8;">{{{question.inputFormat}}}</p>
     </div>
 
     <div class="card" style="margin-bottom:1rem;">
       <h3 style="margin-bottom:0.5rem;">Output Format</h3>
-      <p style="line-height:1.8;">{{question.outputFormat}}</p>
+      <p style="line-height:1.8;">{{{question.outputFormat}}}</p>
+    </div>
+
+    <div class="card" style="margin-bottom:1rem;">
+      <h3 style="margin-bottom:0.5rem;">Constraints</h3>
+      {{#each question.constraintList as |constraint|}}
+      <p style="line-height:1.8;">{{{constraint}}}</p>
+      {{/each}}
     </div>
 
     <div class="card" style="margin-bottom:1rem;">

@@ -5,7 +5,7 @@ import { Repository } from 'typeorm'
 import { Execution, Question, Student, Submission } from 'models/db.entity'
 import { ExecutionResult } from 'runner/runner.dto'
 import { RunnerService } from 'runner/runner.service'
-import { SubmitCodeDto } from './app.dto'
+import { StudentDto, SubmitCodeDto } from './app.dto'
 
 @Injectable()
 export class AppService {
@@ -17,7 +17,7 @@ export class AppService {
     @InjectRepository(Execution) private readonly executionRepo: Repository<Execution>
   ) {}
 
-  async getStudents() {
+  async getStudents(): Promise<StudentDto[]> {
     const studentList = await this.studentRepo.find()
     return studentList.map((s) => ({ id: s.id, name: `${s.firstName} ${s.lastName}` }))
   }
