@@ -2,10 +2,13 @@ import { IsIn, IsNotEmpty } from 'class-validator'
 
 export interface Page {
   pageTitle: string
+  competitionActive?: boolean
+  competitionStartTime?: string
+  competitionDurationMinutes?: number
 }
 
 export interface CsrfProtectedPage extends Page {
-  csrfToken: string // for forms and POST requests
+  csrfToken: string
 }
 
 export interface QuestionPage extends CsrfProtectedPage {
