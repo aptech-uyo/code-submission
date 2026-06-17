@@ -1,7 +1,6 @@
 {{#>base}}
 {{#*inline 'optionalStylesheets'}}
 <link rel="stylesheet" href="/css/katex.min.css">
-<link rel="stylesheet" href="/css/googlecode.min.css">
 {{/inline}}
 {{#*inline 'content'}}
 
@@ -63,10 +62,10 @@
         <select id="language"
           style="width:100%; margin-top:4px; padding:0.5rem 0.75rem; background:var(--bg);
                  border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:0.95rem;">
-          <option value="PY">Python</option>
-          <option value="JS">JavaScript</option>
-          <option value="C">C</option>
-          <option value="JAVA">Java</option>
+          <option value="PY">Python 3.14.6</option>
+          <option value="JS">Node.js v20.18.0</option>
+          <option value="C">C (C17)</option>
+          <option value="JAVA">Java (OpenJDK 25.0.2)</option>
         </select>
       </label>
 
@@ -167,8 +166,8 @@
             <p style="font-size:0.85rem; color:var(--text-muted);">
               Passed: ${data.passedCases} / ${data.totalCases}
             </p>
-            ${data.output ? `<pre style="margin-top:0.5rem;font-size:0.8rem;">${data.output}</pre>` : ''}
-            ${data.errorMessage ? `<pre style="margin-top:0.5rem;font-size:0.8rem;color:var(--error);">${data.errorMessage}</pre>` : ''}
+            ${(data.output && data.status != 'COMPILE_ERROR' && data.status != 'RUNTIME_ERROR' && data.status != 'TIME_LIMIT_EXCEEDED') ? `<pre style="margin-top:0.5rem;font-size:0.8rem;">${data.status === 'WRONG_ANSWER' ? `Wrong answer on test ${data.passedCases + 1}` : data.output}</pre>` : ''}
+            ${(data.errorMessage && data.status != 'WRONG_ANSWER') ? `<pre style="margin-top:0.5rem;font-size:0.8rem;color:var(--error);">${data.status === 'COMPILE_ERROR' ? 'Compilation error' : data.status === 'RUNTIME_ERROR' ? 'Runtime error' : data.status === 'TIME_LIMIT_EXCEEDED' ? 'Time limit exceeded' : ''}</pre>` : ''}
           </div>`;
         resultDiv.style.display = 'block';
       } catch (e) {

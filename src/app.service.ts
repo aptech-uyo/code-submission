@@ -67,4 +67,13 @@ export class AppService {
   getQuestionRepo() {
     return this.questionRepo
   }
+  getStudentRepo() {
+    return this.studentRepo
+  }
+  getSubmissionRepo() {
+    return this.executionRepo
+  }
+  getExecutionRepo() {
+    return this.executionRepo
+  }
 }
