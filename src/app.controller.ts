@@ -16,11 +16,24 @@ import {
 import { ConfigService } from '@nestjs/config'
 import { FileInterceptor } from '@nestjs/platform-express'
 import { Request } from 'express'
+import hljs from 'highlight.js'
+import { marked } from 'marked'
+import { markedHighlight } from 'marked-highlight'
+import markedKatex, { MarkedKatexOptions } from 'marked-katex-extension'
 import * as multer from 'multer'
 
 import { ExecutionResult } from 'runner/runner.dto'
-import { MAX_SOURCE_FILE_SIZE, Page, SubmitCodeDto } from './app.dto'
+import { MAX_SOURCE_FILE_SIZE, Page, QuestionPage, SubmitCodeDto } from './app.dto'
 import { AppService } from './app.service'
+
+marked.use(
+  markedKatex({ throwOnError: false } as MarkedKatexOptions),
+  markedHighlight({
+    highlight: function highlight(code: string, language: string, info: string): string {
+      return hljs.highlight(code, { language: hljs.getLanguage(language) ? language : 'plaintext' }).value
+    }
+  })
+)
 
 @Controller()
 export class AppController {
@@ -80,16 +93,29 @@ export class AppController {
 
   @Get('questions/:id')
   @Render('question')
-  async getQuestion(@Param('id') id: number, @Req() req: Request) {
+  async getQuestion(@Param('id') id: number, @Req() req: Request): Promise<QuestionPage> {
     const question = await this.appService.getQuestion(id)
     if (!question) throw new NotFoundException('Question not found')
 
     return {
       pageTitle: `Problem ${question.id}: ${question.title}`,
       question: {
-        ...question,
-        constraintsJson: JSON.stringify(question.constraintList),
-        examplesJson: JSON.stringify(question.examples)
+        id: question.id,
+        title: question.title,
+        statement: await marked.parseInline(question.statement),
+        inputFormat: await marked.parseInline(question.inputFormatStatement),
+        outputFormat: await marked.parseInline(question.outputFormatStatement),
+        constraintList: await Promise.all(
+          question.constraintList?.map(async (c) => await marked.parseInline(c)) ?? []
+        ),
+        examplesJson: JSON.stringify(
+          await Promise.all(
+            question.examples.map(async (ex) => {
+              ex.explanation = ex.explanation ? await marked.parseInline(ex.explanation) : undefined
+              return ex
+            })
+          )
+        )
       },
       students: await this.appService.getStudents(),
       csrfToken: req.csrfToken!(),
