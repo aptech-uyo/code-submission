@@ -129,14 +129,14 @@
 </head>
 <body>
   <nav class="navbar">
-    <span class="brand">⚡ CodeComp</span>
+    <a href="/" class="brand"><img src="/assets/logo.png" alt="CodeComp" style="height:32px; vertical-align:middle;" /></a>
     <a href="/">Instructions</a>
     <a href="/questions">Problems</a>
     <a href="/leaderboard">Leaderboard</a>
   </nav>
   <div class="timer-bar">
-    <span>⏱ Time remaining:</span>
-    <span id="competition-timer">1:15:00</span>
+    <span id="timer-label">⏱ Time remaining:</span>
+    <span id="competition-timer">--:--</span>
     <div class="progress-bar-wrap">
       <div class="progress-bar-fill" id="timer-fill" style="width:100%"></div>
     </div>
@@ -145,35 +145,66 @@
     {{>content}}
   </div>
   <script>
-    // Competition timer — 1 hour 15 minutes
-    const TOTAL = 75 * 60;
-    const KEY = 'comp_start';
-    let start = parseInt(localStorage.getItem(KEY) || '0');
-    if (!start) { start = Date.now(); localStorage.setItem(KEY, start); }
+    // Competition timer — 
+    const COMP_START = new Date('{{competitionStartTime}}').getTime();
+    const DURATION_MINUTES = {{competitionDurationMinutes}};
+    const TOTAL = DURATION_MINUTES * 60; 
+    const COMP_END = COMP_START + TOTAL * 1000;
+
     const el = document.getElementById('competition-timer');
     const fill = document.getElementById('timer-fill');
-    function tick() {
-      const elapsed = Math.floor((Date.now() - start) / 1000);
-      const remaining = Math.max(0, TOTAL - elapsed);
-      const h = Math.floor(remaining / 3600);
-      const m = Math.floor((remaining % 3600) / 60);
-      const s = remaining % 60;
-      const label = h > 0
+    const timerLabel = document.getElementById('timer-label');
+
+    function formatTime(totalSeconds) {
+      const h = Math.floor(totalSeconds / 3600);
+      const m = Math.floor((totalSeconds % 3600) / 60);
+      const s = totalSeconds % 60;
+      return h > 0
         ? `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
         : `${m}:${String(s).padStart(2,'0')}`;
-      el.textContent = label;
+    }
+
+    function tick() {
+      const now = Date.now();
+
+      // Competition hasn't started yet
+      if (now < COMP_START) {
+        const secsUntilStart = Math.ceil((COMP_START - now) / 1000);
+        timerLabel.textContent = '🕐 Starts in:';
+        el.textContent = formatTime(secsUntilStart);
+        el.className = '';
+        fill.style.width = '100%';
+        fill.style.background = '#2196f3';
+        return;
+      }
+
+      // Competition is running
+      const remaining = Math.max(0, Math.floor((COMP_END - now) / 1000));
+      timerLabel.textContent = '⏱ Time remaining:';
+      el.textContent = formatTime(remaining);
       el.className = remaining < 300 ? 'danger' : remaining < 900 ? 'warn' : '';
       fill.style.width = ((remaining / TOTAL) * 100) + '%';
       fill.style.background = remaining < 300 ? '#f44336' : remaining < 900 ? '#ff9800' : '#0f9b8e';
+
       if (remaining === 0) {
         el.textContent = 'TIME UP';
+        timerLabel.textContent = '⏰';
         document.body.insertAdjacentHTML('afterbegin',
-          '<div style="position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;display:flex;align-items:center;justify-content:center;font-size:3rem;font-weight:900;color:#e94560;">⏰ TIME IS UP!</div>');
+          '<div id="timeup-overlay" style="position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;display:flex;align-items:center;justify-content:center;font-size:3rem;font-weight:900;color:#e94560;cursor:pointer;" onclick="this.remove()">TIME IS UP!<br><span style="font-size:1rem;color:var(--text-muted);">Click to dismiss</span></div>');
+        // Disable any submit buttons on the page
+        document.querySelectorAll('#submitBtn').forEach(btn => { btn.disabled = true; btn.textContent = 'Submissions Closed'; });
         clearInterval(interval);
       }
     }
+
     tick();
     const interval = setInterval(tick, 1000);
+
+    // Expose for use in page scripts
+    window.__isCompetitionActive = function() {
+      const now = Date.now();
+      return now >= COMP_START && now < COMP_END;
+    };
   </script>
 </body>
 </html>

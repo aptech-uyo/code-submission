@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  ForbiddenException,
   Get,
   Logger,
   NotFoundException,
@@ -12,6 +13,7 @@ import {
   UseInterceptors,
   ValidationPipe
 } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
 import { FileInterceptor } from '@nestjs/platform-express'
 import { Request } from 'express'
 import * as multer from 'multer'
@@ -23,15 +25,41 @@ import { AppService } from './app.service'
 @Controller()
 export class AppController {
   private readonly logger
+  private readonly competitionStartTime: string
+  private readonly competitionDurationMinutes: number
 
-  constructor(private readonly appService: AppService) {
+  constructor(
+    private readonly appService: AppService,
+    private readonly configService: ConfigService
+  ) {
     this.logger = new Logger(AppController.name)
+    this.competitionStartTime = this.configService.getOrThrow<string>('COMPETITION_START_TIME')
+    this.competitionDurationMinutes = parseInt(
+      this.configService.get<string>('COMPETITION_DURATION_MINUTES', '75'),
+      10
+    )
+  }
+
+  /** Shared timer data passed to every page */
+  private getTimerData() {
+    return {
+      competitionStartTime: this.competitionStartTime,
+      competitionDurationMinutes: this.competitionDurationMinutes
+    }
+  }
+
+  /** Check whether the competition is currently active (started and not expired) */
+  private isCompetitionActive(): boolean {
+    const start = new Date(this.competitionStartTime).getTime()
+    const now = Date.now()
+    const end = start + this.competitionDurationMinutes * 60 * 1000
+    return now >= start && now < end
   }
 
   @Get()
   @Render('index')
-  getIndex(): Page {
-    return { pageTitle: 'Welcome' }
+  getIndex(): Page & Record<string, any> {
+    return { pageTitle: 'Welcome', ...this.getTimerData() }
   }
 
   @Get('questions')
@@ -45,7 +73,8 @@ export class AppController {
         title: q.title,
         timeLimit: '1s',
         memoryLimit: '256MB'
-      }))
+      })),
+      ...this.getTimerData()
     }
   }
 
@@ -63,7 +92,9 @@ export class AppController {
         examplesJson: JSON.stringify(question.examples)
       },
       students: await this.appService.getStudents(),
-      csrfToken: req.csrfToken!()
+      csrfToken: req.csrfToken!(),
+      competitionActive: this.isCompetitionActive(),
+      ...this.getTimerData()
     }
   }
 
@@ -80,6 +111,11 @@ export class AppController {
     body: SubmitCodeDto,
     @UploadedFile() file: Express.Multer.File | undefined
   ): Promise<ExecutionResult> {
+    // Block submissions when competition has not started or has ended
+    if (!this.isCompetitionActive()) {
+      throw new ForbiddenException('Submissions are closed. The competition has either not started or has ended.')
+    }
+
     const question = await this.appService.getQuestion(id)
     if (!question) throw new NotFoundException('Question not found')
 
@@ -126,6 +162,6 @@ export class AppController {
     }
 
     const rows = Object.values(grouped).sort((a: any, b: any) => b.totalPassed - a.totalPassed)
-    return { pageTitle: 'Leaderboard', rows: JSON.stringify(rows) }
+    return { pageTitle: 'Leaderboard', rows: JSON.stringify(rows), ...this.getTimerData() }
   }
 }

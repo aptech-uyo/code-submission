@@ -1,7 +1,7 @@
 {{#>base}}
 {{#*inline 'content'}}
 
-<h1 style="font-size:1.8rem; font-weight:800; margin-bottom:0.25rem;">🏆 Leaderboard</h1>
+<h1 style="font-size:1.8rem; font-weight:800; margin-bottom:0.25rem;">Leaderboard</h1>
 <p style="color:var(--text-muted); margin-bottom:2rem;">Live standings — refreshes automatically every 30 seconds.</p>
 
 <div id="board"></div>
@@ -23,7 +23,7 @@
         if (v === 'ATTEMPTED') return '<span class="badge badge-warn">ATT</span>';
         return '<span style="color:var(--text-muted);">—</span>';
       };
-      const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}.`;
+      const medal = `${i+1}.`;
       html += `<tr>
         <td style="font-weight:700;">${medal}</td>
         <td style="font-weight:600;">${row.name}</td>

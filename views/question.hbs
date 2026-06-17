@@ -7,7 +7,7 @@
   <div style="flex:1; min-width:0;">
     <h1 style="font-size:1.6rem; font-weight:800; margin-bottom:0.25rem;">{{question.id}}. {{question.title}}</h1>
     <p style="color:var(--text-muted); margin-bottom:1.5rem; font-size:0.9rem;">
-      ⏱ {{question.timeLimit}} &nbsp;|&nbsp; 💾 {{question.memoryLimit}}
+      {{question.timeLimit}} &nbsp;|&nbsp; {{question.memoryLimit}}
     </p>
 
     <div class="card" style="margin-bottom:1rem;">
@@ -32,6 +32,7 @@
 
   {{! Right: submit panel }}
   <div style="width:380px; flex-shrink:0;">
+    {{#if competitionActive}}
     <div class="card" style="position:sticky; top:100px;">
       <h2 style="font-size:1.1rem; margin-bottom:1rem;">Submit Solution</h2>
 
@@ -72,10 +73,18 @@
           style="display:block; margin-top:4px; color:var(--text-muted); font-size:0.85rem;" />
       </div>
 
-      <button id="submitBtn" class="btn btn-primary" style="width:100%;">🚀 Submit</button>
+      <button id="submitBtn" class="btn btn-primary" style="width:100%;">Submit</button>
 
       <div id="result" style="margin-top:1rem; display:none;"></div>
     </div>
+    {{else}}
+    <div class="card" style="position:sticky; top:100px; text-align:center; border-left:4px solid var(--error);">
+      <h2 style="font-size:1.1rem; margin-bottom:0.75rem; color:var(--error);">Submissions Closed</h2>
+      <p style="color:var(--text-muted); font-size:0.9rem; line-height:1.6;">
+        The competition has either not started yet or has ended. You can still view the problem statement.
+      </p>
+    </div>
+    {{/if}}
   </div>
 </div>
 
@@ -95,52 +104,71 @@
       </div>`;
   });
 
-  // Submit handler
-  document.getElementById('submitBtn').addEventListener('click', async () => {
-    const btn = document.getElementById('submitBtn');
-    const resultDiv = document.getElementById('result');
-    btn.disabled = true;
-    btn.textContent = '⏳ Running...';
-    resultDiv.style.display = 'none';
+  // Submit handler — only attach if competition is active and submit form is rendered
+  const submitBtn = document.getElementById('submitBtn');
+  if (submitBtn) {
+    submitBtn.addEventListener('click', async () => {
+      // Client-side time check
+      if (window.__isCompetitionActive && !window.__isCompetitionActive()) {
+        alert('Time is up! Submissions are closed.');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Submissions Closed';
+        return;
+      }
 
-    const formData = new FormData();
-    formData.append('studentId', Number(document.getElementById('studentId').value));
-    formData.append('language', document.getElementById('language').value);
+      const btn = submitBtn;
+      const resultDiv = document.getElementById('result');
+      btn.disabled = true;
+      btn.textContent = '⏳ Running...';
+      resultDiv.style.display = 'none';
 
-    const file = document.getElementById('codeFile').files[0];
-    if (file) {
-      formData.append('codeFile', file);
-    } else {
-      formData.append('codeText', document.getElementById('codeText').value);
-    }
+      const formData = new FormData();
+      formData.append('studentId', Number(document.getElementById('studentId').value));
+      formData.append('language', document.getElementById('language').value);
 
-    try {
-      const res = await fetch(window.location.href, {
-        method: 'POST',
-        headers: { 'X-Csrf-Token': '{{csrfToken}}' },
-        body: formData
-      });
-      const data = await res.json();
+      const file = document.getElementById('codeFile').files[0];
+      if (file) {
+        formData.append('codeFile', file);
+      } else {
+        formData.append('codeText', document.getElementById('codeText').value);
+      }
 
-      const statusColor = data.status === 'ACCEPTED' ? 'var(--success)' : 'var(--error)';
-      resultDiv.innerHTML = `
-        <div class="card" style="border-left:4px solid ${statusColor};">
-          <p style="font-weight:700; color:${statusColor}; margin-bottom:0.5rem;">${data.status}</p>
-          <p style="font-size:0.85rem; color:var(--text-muted);">
-            Passed: ${data.passedCases} / ${data.totalCases}
-          </p>
-          ${data.output ? `<pre style="margin-top:0.5rem;font-size:0.8rem;">${data.output}</pre>` : ''}
-          ${data.errorMessage ? `<pre style="margin-top:0.5rem;font-size:0.8rem;color:var(--error);">${data.errorMessage}</pre>` : ''}
-        </div>`;
-      resultDiv.style.display = 'block';
-    } catch (e) {
-      resultDiv.innerHTML = '<p style="color:var(--error);">Network error. Try again.</p>';
-      resultDiv.style.display = 'block';
-    } finally {
-      btn.disabled = false;
-      btn.textContent = '🚀 Submit';
-    }
-  });
+      try {
+        const res = await fetch(window.location.href, {
+          method: 'POST',
+          headers: { 'X-Csrf-Token': '{{csrfToken}}' },
+          body: formData
+        });
+        const data = await res.json();
+
+        if (data.statusCode === 403) {
+          resultDiv.innerHTML = '<div class="card" style="border-left:4px solid var(--error);"><p style="font-weight:700; color:var(--error);">' + data.message + '</p></div>';
+          resultDiv.style.display = 'block';
+          btn.disabled = true;
+          btn.textContent = 'Submissions Closed';
+          return;
+        }
+
+        const statusColor = data.status === 'ACCEPTED' ? 'var(--success)' : 'var(--error)';
+        resultDiv.innerHTML = `
+          <div class="card" style="border-left:4px solid ${statusColor};">
+            <p style="font-weight:700; color:${statusColor}; margin-bottom:0.5rem;">${data.status}</p>
+            <p style="font-size:0.85rem; color:var(--text-muted);">
+              Passed: ${data.passedCases} / ${data.totalCases}
+            </p>
+            ${data.output ? `<pre style="margin-top:0.5rem;font-size:0.8rem;">${data.output}</pre>` : ''}
+            ${data.errorMessage ? `<pre style="margin-top:0.5rem;font-size:0.8rem;color:var(--error);">${data.errorMessage}</pre>` : ''}
+          </div>`;
+        resultDiv.style.display = 'block';
+      } catch (e) {
+        resultDiv.innerHTML = '<p style="color:var(--error);">Network error. Try again.</p>';
+        resultDiv.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Submit';
+      }
+    });
+  }
 </script>
 
 {{/inline}}
