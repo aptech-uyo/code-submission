@@ -1,5 +1,6 @@
+import { TestCase } from 'runner/runner.dto'
 import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
-import { ExecutionStatus, Language } from '../app.dto'
+import { ExecutionStatus, Language, QuestionExample } from '../app.dto'
 
 abstract class Base {
   @PrimaryGeneratedColumn()
@@ -29,14 +30,29 @@ export class Student extends Base {
 
 @Entity()
 export class Question extends Base {
+  @Column()
+  title!: string
+
+  @Column()
+  statement!: string
+
+  @Column()
+  inputFormatStatement!: string
+
+  @Column()
+  outputFormatStatement!: string
+
+  @Column({ type: 'text', nullable: true })
+  constraintList?: string[]
+
+  @Column({ type: 'text' })
+  examples!: QuestionExample[]
+
+  @Column({ type: 'text' })
+  testCases!: TestCase[]
+
   @OneToMany(() => Submission, (submission) => submission.question, { cascade: true })
   submissions!: Submission[]
-
-  @Column()
-  inputLineCount!: number
-
-  @Column()
-  outputLineCount!: number
 }
 
 @Entity()

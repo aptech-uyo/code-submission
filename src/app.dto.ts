@@ -24,6 +24,12 @@ export type ExecutionStatus =
   | 'RUNTIME_ERROR'
   | 'TIME_LIMIT_EXCEEDED'
 
+export interface QuestionExample {
+  input: string
+  output: string
+  explanation?: string
+}
+
 export class SubmitCodeDto {
   @IsNotEmpty()
   studentId!: number

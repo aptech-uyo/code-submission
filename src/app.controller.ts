@@ -36,15 +36,15 @@ export class AppController {
 
   @Get('questions')
   @Render('questions')
-  getQuestions() {
-    const questions = this.appService.getQuestions()
+  async getQuestions() {
+    const questions = await this.appService.getQuestions()
     return {
       pageTitle: 'Questions',
       questions: questions.map((q) => ({
         id: q.id,
         title: q.title,
-        timeLimit: q.timeLimit,
-        memoryLimit: q.memoryLimit
+        timeLimit: '1s',
+        memoryLimit: '256MB'
       }))
     }
   }
@@ -52,14 +52,14 @@ export class AppController {
   @Get('questions/:id')
   @Render('question')
   async getQuestion(@Param('id') id: number, @Req() req: Request) {
-    const question = this.appService.getQuestion(id)
+    const question = await this.appService.getQuestion(id)
     if (!question) throw new NotFoundException('Question not found')
 
     return {
       pageTitle: `Problem ${question.id}: ${question.title}`,
       question: {
         ...question,
-        constraintsJson: JSON.stringify(question.constraints),
+        constraintsJson: JSON.stringify(question.constraintList),
         examplesJson: JSON.stringify(question.examples)
       },
       students: await this.appService.getStudents(),
@@ -80,7 +80,7 @@ export class AppController {
     body: SubmitCodeDto,
     @UploadedFile() file: Express.Multer.File | undefined
   ): Promise<ExecutionResult> {
-    const question = this.appService.getQuestion(id)
+    const question = await this.appService.getQuestion(id)
     if (!question) throw new NotFoundException('Question not found')
 
     const codeText = file ? file.buffer.toString('utf8') : body.codeText

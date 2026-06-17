@@ -2,8 +2,7 @@ import { Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 
-import { Execution, Student, Submission } from 'models/db.entity'
-import { QuestionData, QUESTIONS } from 'models/questions.data'
+import { Execution, Question, Student, Submission } from 'models/db.entity'
 import { ExecutionResult } from 'runner/runner.dto'
 import { RunnerService } from 'runner/runner.service'
 import { SubmitCodeDto } from './app.dto'
@@ -12,12 +11,10 @@ import { SubmitCodeDto } from './app.dto'
 export class AppService {
   constructor(
     private readonly runnerService: RunnerService,
-    @InjectRepository(Student)
-    private readonly studentRepo: Repository<Student>,
-    @InjectRepository(Submission)
-    private readonly submissionRepo: Repository<Submission>,
-    @InjectRepository(Execution)
-    private readonly executionRepo: Repository<Execution>
+    @InjectRepository(Student) private readonly studentRepo: Repository<Student>,
+    @InjectRepository(Question) private readonly questionRepo: Repository<Question>,
+    @InjectRepository(Submission) private readonly submissionRepo: Repository<Submission>,
+    @InjectRepository(Execution) private readonly executionRepo: Repository<Execution>
   ) {}
 
   async getStudents() {
@@ -25,15 +22,15 @@ export class AppService {
     return studentList.map((s) => ({ id: s.id, name: `${s.firstName} ${s.lastName}` }))
   }
 
-  getQuestions() {
-    return QUESTIONS
+  async getQuestions(): Promise<Question[]> {
+    return await this.questionRepo.find()
   }
 
-  getQuestion(id: number) {
-    return QUESTIONS.find((q) => q.id === id) ?? null
+  async getQuestion(id: number): Promise<Question | null> {
+    return await this.questionRepo.findOneBy({ id })
   }
 
-  async submitCode(question: QuestionData, data: SubmitCodeDto): Promise<Submission> {
+  async submitCode(question: Question, data: SubmitCodeDto): Promise<Submission> {
     const submission = this.submissionRepo.create({
       questionId: question.id,
       studentId: data.studentId,
@@ -44,7 +41,7 @@ export class AppService {
   }
 
   async runSubmission(submission: Submission): Promise<ExecutionResult> {
-    const question = this.getQuestion(submission.questionId)!
+    const question = (await this.getQuestion(submission.questionId))!
     const result = this.runnerService.runCode(submission.codeText, submission.language, question.testCases)
 
     const execution = this.executionRepo.create({
@@ -64,5 +61,10 @@ export class AppService {
       order: { createdAt: 'ASC' }
     })
     return submissions
+  }
+
+  // for internal use only via REPL, until admin UI is built
+  getQuestionRepo() {
+    return this.questionRepo
   }
 }
