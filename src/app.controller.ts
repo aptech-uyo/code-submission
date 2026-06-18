@@ -48,9 +48,8 @@ export class AppController {
   ) {
     this.logger = new Logger(AppController.name)
     this.competitionStartTime = this.configService.getOrThrow<string>('COMPETITION_START_TIME')
-    this.competitionDurationMinutes = parseInt(
-      this.configService.get<string>('COMPETITION_DURATION_MINUTES', '75'),
-      10
+    this.competitionDurationMinutes = Number(
+      this.configService.get<string>('COMPETITION_DURATION_MINUTES', '75')
     )
   }
 
@@ -95,9 +94,7 @@ export class AppController {
       pageTitle: 'Questions',
       questions: questions.map((q) => ({
         id: q.id,
-        title: q.title,
-        timeLimit: '1s',
-        memoryLimit: '256MB'
+        title: q.title
       })),
       ...this.getTimerData()
     }

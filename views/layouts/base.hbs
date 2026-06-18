@@ -202,7 +202,7 @@
         el.textContent = 'TIME UP';
         timerLabel.textContent = '⏰';
         document.body.insertAdjacentHTML('afterbegin',
-          '<div id="timeup-overlay" style="position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;display:flex;align-items:center;justify-content:center;font-size:3rem;font-weight:900;color:#e94560;cursor:pointer;" onclick="this.remove()">TIME IS UP!<br><span style="font-size:1rem;color:var(--text-muted);">Click to dismiss</span></div>');
+          '<div id="timeup-overlay" title="Click to dismiss" style="position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;display:flex;align-items:center;justify-content:center;font-size:3rem;font-weight:900;color:#e94560;cursor:pointer;" onclick="this.remove()">⏰ TIME IS UP!<br></div>');
         // Disable any submit buttons on the page
         document.querySelectorAll('#submitBtn').forEach(btn => { btn.disabled = true; btn.textContent = 'Submissions Closed'; });
         clearInterval(interval);
