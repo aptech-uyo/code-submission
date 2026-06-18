@@ -1,4 +1,4 @@
-import { IsIn, IsNotEmpty } from 'class-validator'
+import { IsIn, IsNotEmpty, ValidateIf } from 'class-validator'
 
 export interface Page {
   pageTitle: string
@@ -43,21 +43,22 @@ export interface QuestionDetailsDto {
   id: number
   title: string
   statement: string
-  inputFormat: string 
-  outputFormat: string 
-  constraintList: string[] 
-  examplesJson: string 
+  inputFormat: string
+  outputFormat: string
+  constraintList: string[]
+  examplesJson: string
 }
 
 export class SubmitCodeDto {
-  @IsNotEmpty()
+  @IsNotEmpty({ message: 'Please select your name.' })
   studentId!: number
 
-  @IsIn(['C', 'PY', 'JAVA', 'JS'])
+  @IsIn(['C', 'PY', 'JAVA', 'JS'], { message: 'Please select a valid language.' })
   language!: Language
 
-  @IsNotEmpty()
-  codeText!: string
+  @ValidateIf((o, v) => v != null)
+  @IsNotEmpty({ message: 'No code provided. Either paste code or upload a file.' })
+  codeText?: string
 }
 
 interface LeaderboardEntry {
@@ -71,4 +72,4 @@ interface LeaderboardEntry {
 
 export const SESSION_COOKIE_NAME = 'connect.sid'
 export const CSRF_HEADER_NAME = 'X-Csrf-Token'
-export const MAX_SOURCE_FILE_SIZE = 512 * 1024 
+export const MAX_SOURCE_FILE_SIZE = 512 * 1024

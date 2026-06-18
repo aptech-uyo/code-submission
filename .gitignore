@@ -21,7 +21,7 @@ pids
 *.pid.lock
 sessions/
 cache/
-db.sqlite
+*db.sqlite
 
 # Compiled binary addons (https://nodejs.org/api/addons.html)
 build/Release

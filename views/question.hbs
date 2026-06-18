@@ -51,6 +51,7 @@
         <select id="studentId"
           style="width:100%; margin-top:4px; padding:0.5rem 0.75rem; background:var(--bg);
                  border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:0.95rem;">
+          <option selected disabled value="">Don't choose the wrong name lol</option>
           {{#each students as | student |}}
           <option value="{{student.id}}">{{student.name}}</option>
           {{/each}}
@@ -62,10 +63,10 @@
         <select id="language"
           style="width:100%; margin-top:4px; padding:0.5rem 0.75rem; background:var(--bg);
                  border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:0.95rem;">
-          <option value="PY">Python 3.14.6</option>
-          <option value="JS">Node.js v20.18.0</option>
           <option value="C">C (C17)</option>
+          <option value="PY">Python 3.14.6</option>
           <option value="JAVA">Java (OpenJDK 25.0.2)</option>
+          <option value="JS">Node.js v20.18.0</option>
         </select>
       </label>
 
@@ -133,15 +134,12 @@
       resultDiv.style.display = 'none';
 
       const formData = new FormData();
-      formData.append('studentId', Number(document.getElementById('studentId').value));
+      formData.append('studentId', document.getElementById('studentId').value);
       formData.append('language', document.getElementById('language').value);
 
       const file = document.getElementById('codeFile').files[0];
-      if (file) {
-        formData.append('codeFile', file);
-      } else {
-        formData.append('codeText', document.getElementById('codeText').value);
-      }
+      if (file) formData.append('codeFile', file);
+      else formData.append('codeText', document.getElementById('codeText').value);
 
       try {
         const res = await fetch(window.location.href, {
@@ -156,6 +154,11 @@
           resultDiv.style.display = 'block';
           btn.disabled = true;
           btn.textContent = 'Submissions Closed';
+          return;
+        } else if (data.statusCode >= 400) {
+          const statusColor = 'var(--error)';
+          resultDiv.innerHTML = `<p style="color:var(--error);">${data.statusCode >= 500 ? 'Something went wrong. Try again.' : Array.isArray(data.message) ? data.message[0] : data.message}</p>`;
+          resultDiv.style.display = 'block';
           return;
         }
 

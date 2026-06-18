@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   ForbiddenException,
@@ -152,16 +153,18 @@ export class AppController {
     @UploadedFile() file: Express.Multer.File | undefined
   ): Promise<ExecutionResult> {
     // Block submissions when competition has not started or has ended
-    if (!this.isCompetitionActive()) {
-      throw new ForbiddenException('Submissions are closed. The competition has either not started or has ended.')
-    }
+    if (!this.isCompetitionActive())
+      throw new ForbiddenException(
+        'Submissions are closed. The competition has either not started or has ended.'
+      )
 
     const question = await this.appService.getQuestion(id)
     if (!question) throw new NotFoundException('Question not found')
 
     const codeText = file ? file.buffer.toString('utf8') : body.codeText
     if (codeText == null || codeText.trim() == null)
-      throw new NotFoundException('No code provided. Either paste code or upload a file.')
+      throw new BadRequestException('No code provided. Either paste code or upload a file.')
+    body.codeText = codeText
 
     let submission
     try {
@@ -191,10 +194,10 @@ export class AppController {
     for (const sub of submissions) {
       const key = `${sub.student.firstName} ${sub.student.lastName}`
       if (!grouped[key]) grouped[key] = { name: key, questions: {}, totalPassed: 0, firstAcceptedAt: null }
-      
+
       const acceptedExecution = sub.executions?.find((e) => e.status === 'ACCEPTED')
       const accepted = !!acceptedExecution
-      
+
       if (accepted) {
         const time = new Date(acceptedExecution.createdAt).getTime()
         if (!grouped[key].firstAcceptedAt || time < grouped[key].firstAcceptedAt) {
