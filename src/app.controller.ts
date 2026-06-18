@@ -24,7 +24,14 @@ import markedKatex, { MarkedKatexOptions } from 'marked-katex-extension'
 import * as multer from 'multer'
 
 import { ExecutionResult } from 'runner/runner.dto'
-import { MAX_SOURCE_FILE_SIZE, Page, QuestionPage, SubmitCodeDto } from './app.dto'
+import {
+  LeaderboardEntry,
+  LeaderboardPage,
+  MAX_SOURCE_FILE_SIZE,
+  Page,
+  QuestionPage,
+  SubmitCodeDto
+} from './app.dto'
 import { AppService } from './app.service'
 
 marked.use(
@@ -184,41 +191,111 @@ export class AppController {
 
   @Get('leaderboard')
   @Render('leaderboard')
-  async getLeaderboard() {
+  async getLeaderboard(): Promise<LeaderboardPage> {
     const submissions = await this.appService.getLeaderboard()
-    const grouped: Record<string, any> = {}
+    const rows: LeaderboardEntry[] = []
 
     for (const sub of submissions) {
-      const key = `${sub.student.firstName} ${sub.student.lastName}`
-      if (!grouped[key]) grouped[key] = { name: key, questions: {}, totalPassed: 0, firstAcceptedAt: null }
-
-      const acceptedExecution = sub.executions?.find((e) => e.status === 'ACCEPTED')
-      const accepted = !!acceptedExecution
-
-      if (accepted) {
-        const time = new Date(acceptedExecution.createdAt).getTime()
-        if (!grouped[key].firstAcceptedAt || time < grouped[key].firstAcceptedAt) {
-          grouped[key].firstAcceptedAt = time
-        }
-      }
-
-      if (!grouped[key].questions[sub.questionId]) {
-        grouped[key].questions[sub.questionId] = accepted ? 'ACCEPTED' : 'ATTEMPTED'
-        if (accepted) grouped[key].totalPassed++
-      } else if (accepted && grouped[key].questions[sub.questionId] !== 'ACCEPTED') {
-        grouped[key].questions[sub.questionId] = 'ACCEPTED'
-        grouped[key].totalPassed++
+      const entry = rows.find((e) => e.studentId == sub.studentId)
+      if (entry) {
+        entry.submissions.push({
+          id: sub.id,
+          questionId: sub.questionId,
+          createdAt: sub.createdAt.toISOString(),
+          status: sub.executions[0].status // only works now because we guarantee only one exec/submission
+        })
+      } else {
+        rows.push({
+          studentId: sub.studentId,
+          studentName: `${sub.student.firstName} ${sub.student.lastName}`,
+          submissions: [
+            {
+              id: sub.id,
+              questionId: sub.questionId,
+              createdAt: sub.createdAt.toISOString(),
+              status: sub.executions[0].status
+            }
+          ]
+        })
       }
     }
 
-    const rows = Object.values(grouped).sort((a: any, b: any) => {
-      if (a.firstAcceptedAt && b.firstAcceptedAt) {
-        return a.firstAcceptedAt - b.firstAcceptedAt
+    rows.sort((a, b) => {
+      const aAcceptedCount = a.submissions.reduce((acc, i) => acc + (i.status === 'ACCEPTED' ? 1 : 0), 0)
+      const bAcceptedCount = b.submissions.reduce((acc, i) => acc + (i.status === 'ACCEPTED' ? 1 : 0), 0)
+      if (aAcceptedCount != bAcceptedCount) return bAcceptedCount - aAcceptedCount
+
+      if (aAcceptedCount == 0) {
+        const aWrongCount = a.submissions.reduce((acc, i) => acc + (i.status === 'WRONG_ANSWER' ? 1 : 0), 0)
+        const bWrongCount = b.submissions.reduce((acc, i) => acc + (i.status === 'WRONG_ANSWER' ? 1 : 0), 0)
+        if (aWrongCount != bWrongCount) return bWrongCount - aWrongCount
       }
-      if (a.firstAcceptedAt) return -1
-      if (b.firstAcceptedAt) return 1
-      return b.totalPassed - a.totalPassed
+
+      const now = new Date()
+      const aAcceptedAt = a.submissions.reduce(
+        (prev, i) =>
+          i.status === 'ACCEPTED' ? (new Date(prev.createdAt) < new Date(i.createdAt) ? prev : i) : prev,
+        { id: 0, questionId: 0, createdAt: now.toISOString(), status: 'ACCEPTED' }
+      )
+      const bAcceptedAt = b.submissions.reduce(
+        (prev, i) =>
+          i.status === 'ACCEPTED' ? (new Date(prev.createdAt) < new Date(i.createdAt) ? prev : i) : prev,
+        { id: 0, questionId: 0, createdAt: now.toISOString(), status: 'ACCEPTED' }
+      )
+      if (new Date(aAcceptedAt.createdAt).getTime() != new Date(bAcceptedAt.createdAt).getTime())
+        return new Date(bAcceptedAt.createdAt).getTime() - new Date(aAcceptedAt.createdAt).getTime()
+
+      const aWrongAt = a.submissions.reduce(
+        (prev, i) =>
+          i.status === 'WRONG_ANSWER' ? (new Date(prev.createdAt) < new Date(i.createdAt) ? prev : i) : prev,
+        { id: 0, questionId: 0, createdAt: now.toISOString(), status: 'WRONG_ANSWER' }
+      )
+      const bWrongAt = b.submissions.reduce(
+        (prev, i) =>
+          i.status === 'WRONG_ANSWER' ? (new Date(prev.createdAt) < new Date(i.createdAt) ? prev : i) : prev,
+        { id: 0, questionId: 0, createdAt: now.toISOString(), status: 'WRONG_ANSWER' }
+      )
+      if (new Date(aWrongAt.createdAt).getTime() != new Date(bWrongAt.createdAt).getTime())
+        return new Date(bWrongAt.createdAt).getTime() - new Date(aWrongAt.createdAt).getTime()
+
+      return 0
     })
+
     return { pageTitle: 'Leaderboard', rows: JSON.stringify(rows), ...this.getTimerData() }
+
+    // const grouped: Record<string, any> = {}
+
+    // for (const sub of submissions) {
+    //   const key = `${sub.student.firstName} ${sub.student.lastName}`
+    //   if (!grouped[key]) grouped[key] = { name: key, questions: {}, totalPassed: 0, firstAcceptedAt: null }
+
+    //   const acceptedExecution = sub.executions?.find((e) => e.status === 'ACCEPTED')
+    //   const accepted = !!acceptedExecution
+
+    //   if (accepted) {
+    //     const time = new Date(acceptedExecution.createdAt).getTime()
+    //     if (!grouped[key].firstAcceptedAt || time < grouped[key].firstAcceptedAt) {
+    //       grouped[key].firstAcceptedAt = time
+    //     }
+    //   }
+
+    //   if (!grouped[key].questions[sub.questionId]) {
+    //     grouped[key].questions[sub.questionId] = accepted ? 'ACCEPTED' : 'ATTEMPTED'
+    //     if (accepted) grouped[key].totalPassed++
+    //   } else if (accepted && grouped[key].questions[sub.questionId] !== 'ACCEPTED') {
+    //     grouped[key].questions[sub.questionId] = 'ACCEPTED'
+    //     grouped[key].totalPassed++
+    //   }
+    // }
+
+    // const rows = Object.values(grouped).sort((a: any, b: any) => {
+    //   if (a.firstAcceptedAt && b.firstAcceptedAt) {
+    //     return a.firstAcceptedAt - b.firstAcceptedAt
+    //   }
+    //   if (a.firstAcceptedAt) return -1
+    //   if (b.firstAcceptedAt) return 1
+    //   return b.totalPassed - a.totalPassed
+    // })
+    // return { pageTitle: 'Leaderboard', rows: JSON.stringify(rows), ...this.getTimerData() }
   }
 }

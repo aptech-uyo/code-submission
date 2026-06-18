@@ -20,6 +20,10 @@ export interface SubmissionsPage extends Page {
   submissions: SubmitCodeDto[]
 }
 
+export interface LeaderboardPage extends Page {
+  rows: string // stringified LeaderboardEntry
+}
+
 export type Language = 'C' | 'PY' | 'JAVA' | 'JS'
 export type ExecutionStatus =
   | 'ACCEPTED'
@@ -61,13 +65,17 @@ export class SubmitCodeDto {
   codeText?: string
 }
 
-interface LeaderboardEntry {
-  submissionId: number
+export interface LeaderboardEntry {
   studentId: number
-  executionId: number
   studentName: string
-  language: string
-  latestStatus: ExecutionStatus
+  submissions: SubmissionWithStatus[]
+}
+
+export interface SubmissionWithStatus {
+  id: number
+  questionId: number
+  createdAt: string
+  status: ExecutionStatus
 }
 
 export const SESSION_COOKIE_NAME = 'connect.sid'

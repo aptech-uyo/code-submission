@@ -8,28 +8,52 @@
 
 <script>
   const rows = {{{rows}}};
+  const Q1_ID = 1;
+  const Q2_ID = 2;
 
   function render(data) {
     if (!data.length) {
       document.getElementById('board').innerHTML = '<div class="card" style="text-align:center;color:var(--text-muted);">No submissions yet.</div>';
       return;
     }
-    let html = '<table><thead><tr><th>#</th><th>Name</th><th>Q1</th><th>Q2</th><th>Score</th></tr></thead><tbody>';
+    let html = '<table><thead><tr><th>#</th><th>Name</th><th>Q1</th><th>Q2</th></tr></thead><tbody>';
     data.forEach((row, i) => {
-      const q1 = row.questions[1] || '—';
-      const q2 = row.questions[2] || '—';
-      const badge = (v) => {
-        if (v === 'ACCEPTED') return '<span class="badge badge-success">AC</span>';
-        if (v === 'ATTEMPTED') return '<span class="badge badge-warn">ATT</span>';
-        return '<span style="color:var(--text-muted);">—</span>';
+      const now = new Date()
+
+      const best = (subs) => {
+        const accepted = subs.filter(sub => sub.status === 'ACCEPTED').reduce((prev, i) => {
+          const prevTime = prev ? new Date(prev.createdAt).getTime() : null;
+          const iTime = new Date(i.createdAt).getTime();
+          return prev ? (prevTime < iTime ? prev : i) : i
+        }, null);
+        if (accepted) {
+          const diffMs = new Date(accepted.createdAt) - new Date('{{competitionStartTime}}');
+          const diffMins = Math.floor(((diffMs % 86400000) % 3600000) / 60000);
+          const diffSecs = Math.round(((diffMs % 86400000) % 3600000) / 600000);
+          return `<span style="color:var(--success);">+ ${diffMins}:${`${diffSecs}`.padStart(2, '0')}</span>`;
+        }
+
+        const rejected = subs.reduce((prev, i) => {
+          const prevTime = prev ? new Date(prev.createdAt).getTime() : null;
+          const iTime = new Date(i.createdAt).getTime();
+          return prev ? (prevTime < iTime ? prev : i) : i
+        }, null);
+        if (rejected) {
+          const diffMs = new Date(rejected.createdAt) - new Date('{{competitionStartTime}}');
+          const diffMins = Math.floor(((diffMs % 86400000) % 3600000) / 60000);
+          const diffSecs = Math.round(((diffMs % 86400000) % 3600000) / 60000000);
+          return `<span style="color:var(--error);">+ ${diffMins}:${`${diffSecs}`.padStart(2, '0')}</span>`;
+        }
+
+        return '';
       };
+
       const medal = `${i+1}.`;
       html += `<tr>
         <td style="font-weight:700;">${medal}</td>
-        <td style="font-weight:600;">${row.name}</td>
-        <td>${badge(q1)}</td>
-        <td>${badge(q2)}</td>
-        <td><strong style="color:#4caf50;">${row.totalPassed}</strong></td>
+        <td style="font-weight:600;">${row.studentName}</td>
+        <td>${best(row.submissions.filter(sub => sub.questionId == Q1_ID))}</td>
+        <td>${best(row.submissions.filter(sub => sub.questionId == Q2_ID))}</td>
       </tr>`;
     });
     html += '</tbody></table>';
