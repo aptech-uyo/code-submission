@@ -262,40 +262,5 @@ export class AppController {
     })
 
     return { pageTitle: 'Leaderboard', rows: JSON.stringify(rows), ...this.getTimerData() }
-
-    // const grouped: Record<string, any> = {}
-
-    // for (const sub of submissions) {
-    //   const key = `${sub.student.firstName} ${sub.student.lastName}`
-    //   if (!grouped[key]) grouped[key] = { name: key, questions: {}, totalPassed: 0, firstAcceptedAt: null }
-
-    //   const acceptedExecution = sub.executions?.find((e) => e.status === 'ACCEPTED')
-    //   const accepted = !!acceptedExecution
-
-    //   if (accepted) {
-    //     const time = new Date(acceptedExecution.createdAt).getTime()
-    //     if (!grouped[key].firstAcceptedAt || time < grouped[key].firstAcceptedAt) {
-    //       grouped[key].firstAcceptedAt = time
-    //     }
-    //   }
-
-    //   if (!grouped[key].questions[sub.questionId]) {
-    //     grouped[key].questions[sub.questionId] = accepted ? 'ACCEPTED' : 'ATTEMPTED'
-    //     if (accepted) grouped[key].totalPassed++
-    //   } else if (accepted && grouped[key].questions[sub.questionId] !== 'ACCEPTED') {
-    //     grouped[key].questions[sub.questionId] = 'ACCEPTED'
-    //     grouped[key].totalPassed++
-    //   }
-    // }
-
-    // const rows = Object.values(grouped).sort((a: any, b: any) => {
-    //   if (a.firstAcceptedAt && b.firstAcceptedAt) {
-    //     return a.firstAcceptedAt - b.firstAcceptedAt
-    //   }
-    //   if (a.firstAcceptedAt) return -1
-    //   if (b.firstAcceptedAt) return 1
-    //   return b.totalPassed - a.totalPassed
-    // })
-    // return { pageTitle: 'Leaderboard', rows: JSON.stringify(rows), ...this.getTimerData() }
   }
 }

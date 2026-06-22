@@ -71,7 +71,7 @@ export class AppService {
     return this.studentRepo
   }
   getSubmissionRepo() {
-    return this.executionRepo
+    return this.submissionRepo
   }
   getExecutionRepo() {
     return this.executionRepo
