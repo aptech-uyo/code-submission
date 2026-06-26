@@ -7,6 +7,10 @@
 <a href="/LICENSE"><img src="https://img.shields.io/badge/%C2%A9-2026-brightgreen.svg"></a>
 </p>
 
+## Task
+
+Your task is to port the frontend of this application from Handlebars templates to a separate React project.
+
 ## Useful commands
 
 ```bash
