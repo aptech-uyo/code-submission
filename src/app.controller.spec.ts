@@ -1,10 +1,11 @@
-import { Test, TestingModule } from '@nestjs/testing'
 import { ConfigService } from '@nestjs/config'
+import { Test, TestingModule } from '@nestjs/testing'
 import { getRepositoryToken } from '@nestjs/typeorm'
+
+import { Execution, Question, Student, Submission } from 'models/db.entity'
+import { RunnerService } from 'runner/runner.service'
 import { AppController } from './app.controller'
 import { AppService } from './app.service'
-import { RunnerService } from 'runner/runner.service'
-import { Student, Question, Submission, Execution } from 'models/db.entity'
 
 describe('AppController', () => {
   let app: TestingModule
@@ -19,7 +20,6 @@ describe('AppController', () => {
           useValue: {
             getOrThrow: jest.fn((key: string) => {
               if (key === 'COMPETITION_START_TIME') return new Date().toISOString()
-              if (key === 'SESSION_SECRET') return 'test_secret'
               return ''
             }),
             get: jest.fn((key: string, defaultValue: string) => defaultValue)

@@ -1,27 +1,27 @@
 import { IsIn, IsNotEmpty, ValidateIf } from 'class-validator'
 
-export interface Page {
-  pageTitle: string
+export interface TimerData {
+  competitionStarted?: boolean
   competitionActive?: boolean
   competitionStartTime?: string
   competitionDurationMinutes?: number
 }
 
-export interface CsrfProtectedPage extends Page {
-  csrfToken: string
+export interface QuestionList extends TimerData {
+  questions: QuestionDto[]
 }
 
-export interface QuestionPage extends CsrfProtectedPage {
+export interface QuestionDetails extends TimerData {
   question: QuestionDetailsDto
   students: StudentDto[]
 }
 
-export interface SubmissionsPage extends Page {
+export interface SubmissionList extends TimerData {
   submissions: SubmitCodeDto[]
 }
 
-export interface LeaderboardPage extends Page {
-  rows: string // stringified LeaderboardEntry
+export interface LeaderboardList extends TimerData {
+  rows: LeaderboardEntry[]
 }
 
 export type Language = 'C' | 'PY' | 'JAVA' | 'JS'
@@ -32,6 +32,11 @@ export type ExecutionStatus =
   | 'RUNTIME_ERROR'
   | 'TIME_LIMIT_EXCEEDED'
 
+export interface QuestionDto {
+  id: number
+  title: string
+}
+
 export interface StudentDto {
   id: number
   name: string
@@ -40,17 +45,17 @@ export interface StudentDto {
 export interface QuestionExample {
   input: string
   output: string
-  explanation?: string
+  explanation?: string // HTML snippet
 }
 
 export interface QuestionDetailsDto {
   id: number
   title: string
-  statement: string
-  inputFormat: string
-  outputFormat: string
-  constraintList: string[]
-  examplesJson: string
+  statement: string // HTML snippet
+  inputFormat: string // HTML snippet
+  outputFormat: string // HTML snippet
+  constraintList: string[] // list of HTML snippets
+  examples: QuestionExample[]
 }
 
 export class SubmitCodeDto {
@@ -78,6 +83,4 @@ export interface SubmissionWithStatus {
   status: ExecutionStatus
 }
 
-export const SESSION_COOKIE_NAME = 'connect.sid'
-export const CSRF_HEADER_NAME = 'X-Csrf-Token'
 export const MAX_SOURCE_FILE_SIZE = 512 * 1024

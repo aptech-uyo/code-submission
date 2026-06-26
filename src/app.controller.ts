@@ -8,7 +8,6 @@ import {
   NotFoundException,
   Param,
   Post,
-  Render,
   Req,
   UploadedFile,
   UseInterceptors,
@@ -26,11 +25,12 @@ import * as multer from 'multer'
 import { ExecutionResult } from 'runner/runner.dto'
 import {
   LeaderboardEntry,
-  LeaderboardPage,
+  LeaderboardList,
   MAX_SOURCE_FILE_SIZE,
-  Page,
-  QuestionPage,
-  SubmitCodeDto
+  QuestionDetails,
+  QuestionList,
+  SubmitCodeDto,
+  TimerData
 } from './app.dto'
 import { AppService } from './app.service'
 
@@ -61,7 +61,7 @@ export class AppController {
   }
 
   /** Shared timer data passed to every page */
-  private getTimerData() {
+  private getTimerData(): TimerData {
     return {
       competitionStartTime: this.competitionStartTime,
       competitionDurationMinutes: this.competitionDurationMinutes,
@@ -84,21 +84,18 @@ export class AppController {
     return now >= start
   }
 
-  @Get()
-  @Render('index')
-  getIndex(): Page & Record<string, any> {
-    return { pageTitle: 'Welcome', ...this.getTimerData() }
+  @Get('timer-data')
+  getIndex(): TimerData {
+    return { ...this.getTimerData() }
   }
 
   @Get('questions')
-  @Render('questions')
-  async getQuestions() {
+  async getQuestions(): Promise<QuestionList> {
     if (!this.hasCompetitionStarted()) {
       throw new ForbiddenException('The competition has not started yet.')
     }
     const questions = await this.appService.getQuestions()
     return {
-      pageTitle: 'Questions',
       questions: questions.map((q) => ({
         id: q.id,
         title: q.title
@@ -108,8 +105,7 @@ export class AppController {
   }
 
   @Get('questions/:id')
-  @Render('question')
-  async getQuestion(@Param('id') id: number, @Req() req: Request): Promise<QuestionPage> {
+  async getQuestion(@Param('id') id: number, @Req() req: Request): Promise<QuestionDetails> {
     if (!this.hasCompetitionStarted()) {
       throw new ForbiddenException('The competition has not started yet.')
     }
@@ -117,7 +113,6 @@ export class AppController {
     if (!question) throw new NotFoundException('Question not found')
 
     return {
-      pageTitle: `Problem ${question.id}: ${question.title}`,
       question: {
         id: question.id,
         title: question.title,
@@ -127,17 +122,14 @@ export class AppController {
         constraintList: await Promise.all(
           question.constraintList?.map(async (c) => await marked.parseInline(c)) ?? []
         ),
-        examplesJson: JSON.stringify(
-          await Promise.all(
-            question.examples.map(async (ex) => {
-              ex.explanation = ex.explanation ? await marked.parseInline(ex.explanation) : undefined
-              return ex
-            })
-          )
+        examples: await Promise.all(
+          question.examples.map(async (ex) => {
+            ex.explanation = ex.explanation ? await marked.parseInline(ex.explanation) : undefined
+            return ex
+          })
         )
       },
       students: await this.appService.getStudents(),
-      csrfToken: req.csrfToken!(),
       competitionActive: this.isCompetitionActive(),
       ...this.getTimerData()
     }
@@ -190,8 +182,7 @@ export class AppController {
   }
 
   @Get('leaderboard')
-  @Render('leaderboard')
-  async getLeaderboard(): Promise<LeaderboardPage> {
+  async getLeaderboard(): Promise<LeaderboardList> {
     const submissions = await this.appService.getLeaderboard()
     const rows: LeaderboardEntry[] = []
 
@@ -261,6 +252,6 @@ export class AppController {
       return 0
     })
 
-    return { pageTitle: 'Leaderboard', rows: JSON.stringify(rows), ...this.getTimerData() }
+    return { rows, ...this.getTimerData() }
   }
 }

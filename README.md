@@ -10,7 +10,7 @@
 ## Useful commands
 
 ```bash
-# development
+# run REST application
 $ npm run start
 
 # unit tests

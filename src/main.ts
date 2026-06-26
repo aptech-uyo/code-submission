@@ -2,15 +2,8 @@ import { ValidationPipe } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { NestFactory } from '@nestjs/core'
 import { NestExpressApplication } from '@nestjs/platform-express'
-import cookieParser from 'cookie-parser'
-import { csrfSync } from 'csrf-sync'
-import session from 'express-session'
-import hbs from 'hbs'
-// @ts-expect-error 'hbs-utils' has no type declarations
-import hbsUtils from 'hbs-utils'
 import { join } from 'path'
 
-import { CSRF_HEADER_NAME, SESSION_COOKIE_NAME } from './app.dto'
 import { AppModule } from './app.module'
 
 async function bootstrap() {
@@ -20,36 +13,11 @@ async function bootstrap() {
   app.useStaticAssets(join(__dirname, '..', 'public'))
   app.setBaseViewsDir(join(__dirname, '..', 'views'))
 
-  // session
-  app.use(
-    session({
-      cookie: { secure: false, maxAge: 30 * 24 * 60 * 60 * 1000 },
-      name: SESSION_COOKIE_NAME,
-      proxy: false,
-      secret: configService.getOrThrow<string>('SESSION_SECRET'),
-      resave: false,
-      saveUninitialized: false
-    })
-  )
-  app.use(cookieParser(configService.getOrThrow<string>('SESSION_SECRET')))
-  const { csrfSynchronisedProtection } = csrfSync({
-    getTokenFromRequest: (req) => req.header(CSRF_HEADER_NAME)
-  })
-  app.use(csrfSynchronisedProtection)
-
-  // Handlebars
-  app.setViewEngine('hbs')
-  hbsUtils(hbs).registerWatchedPartials(join(__dirname, '..', 'views', 'layouts'))
-  hbsUtils(hbs).registerWatchedPartials(join(__dirname, '..', 'views', '_questions'))
-
-  // Register Handlebars helpers
-  hbs.registerHelper('json', (context: any) => JSON.stringify(context))
-  hbs.registerHelper('eq', (a: any, b: any) => a === b)
-  hbs.registerHelper('add', (a: number, b: number) => a + b)
+  app.enableCors({ origin: ['http://localhost:3000', 'http://127.0.0.1:3000'], methods: ['GET', 'POST'] })
 
   app.useGlobalPipes(new ValidationPipe({ transform: true }))
 
-  const port = configService.get('APP_PORT', 3000)
+  const port = configService.get('APP_PORT', 3001)
   await app.listen(port)
 }
 
