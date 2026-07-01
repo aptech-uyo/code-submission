@@ -7,16 +7,19 @@
 <div id="board"></div>
 
 <script>
+  const questions = JSON.parse('{{{json questions}}}');
   const rows = {{{rows}}};
-  const Q1_ID = 1;
-  const Q2_ID = 2;
 
   function render(data) {
     if (!data.length) {
       document.getElementById('board').innerHTML = '<div class="card" style="text-align:center;color:var(--text-muted);">No submissions yet.</div>';
       return;
     }
-    let html = '<table><thead><tr><th>#</th><th>Name</th><th>Q1</th><th>Q2</th></tr></thead><tbody>';
+
+    let html = '<table><thead><tr><th>#</th><th>Name</th>';
+    questions.forEach(q => (html += `<th>Q${q.id}</th>`));
+    html += '</tr></thead><tbody>';
+
     data.forEach((row, i) => {
       const now = new Date()
 
@@ -28,9 +31,10 @@
         }, null);
         if (accepted) {
           const diffMs = new Date(accepted.createdAt) - new Date('{{competitionStartTime}}');
+          const diffHrs = Math.floor((diffMs % 86400000) / 3600000);
           const diffMins = Math.floor(((diffMs % 86400000) % 3600000) / 60000);
-          const diffSecs = Math.round(((diffMs % 86400000) % 3600000) / 600000);
-          return `<span style="color:var(--success);">+ ${diffMins}:${`${diffSecs}`.padStart(2, '0')}</span>`;
+          const diffSecs = Math.round((((diffMs % 86400000) % 3600000) % 60000) / 1000);
+          return `<span style="color:var(--success);">+ ${diffHrs > 0 ? `${diffHrs}:` : ''}${diffHrs > 0 ? `${diffMins}`.padStart(2, '0') : diffMins}:${`${diffSecs}`.padStart(2, '0')}</span>`;
         }
 
         const rejected = subs.reduce((prev, i) => {
@@ -40,9 +44,10 @@
         }, null);
         if (rejected) {
           const diffMs = new Date(rejected.createdAt) - new Date('{{competitionStartTime}}');
+          const diffHrs = Math.floor((diffMs % 86400000) / 3600000);
           const diffMins = Math.floor(((diffMs % 86400000) % 3600000) / 60000);
-          const diffSecs = Math.round(((diffMs % 86400000) % 3600000) / 60000000);
-          return `<span style="color:var(--error);">+ ${diffMins}:${`${diffSecs}`.padStart(2, '0')}</span>`;
+          const diffSecs = Math.round((((diffMs % 86400000) % 3600000) % 60000) / 1000);
+          return `<span style="color:var(--error);">+ ${diffHrs > 0 ? `${diffHrs}:` : ''}${diffHrs > 0 ? `${diffMins}`.padStart(2, '0') : diffMins}:${`${diffSecs}`.padStart(2, '0')}</span>`;
         }
 
         return '';
@@ -51,10 +56,9 @@
       const medal = `${i+1}.`;
       html += `<tr>
         <td style="font-weight:700;">${medal}</td>
-        <td style="font-weight:600;">${row.studentName}</td>
-        <td>${best(row.submissions.filter(sub => sub.questionId == Q1_ID))}</td>
-        <td>${best(row.submissions.filter(sub => sub.questionId == Q2_ID))}</td>
-      </tr>`;
+        <td style="font-weight:600;">${row.studentName}</td>`;
+      questions.forEach(q => (html += `<td>${best(row.submissions.filter(sub => sub.questionId == q.id))}</td>`));
+      html += `</tr>`;
     });
     html += '</tbody></table>';
     document.getElementById('board').innerHTML = html;

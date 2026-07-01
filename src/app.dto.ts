@@ -21,6 +21,7 @@ export interface SubmissionsPage extends Page {
 }
 
 export interface LeaderboardPage extends Page {
+  questions: QuestionDto[]
   rows: string // stringified LeaderboardEntry
 }
 
@@ -31,6 +32,11 @@ export type ExecutionStatus =
   | 'COMPILE_ERROR'
   | 'RUNTIME_ERROR'
   | 'TIME_LIMIT_EXCEEDED'
+
+export interface QuestionDto {
+  id: number
+  title: string
+}
 
 export interface StudentDto {
   id: number

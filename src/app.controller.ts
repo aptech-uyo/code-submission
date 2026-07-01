@@ -99,10 +99,7 @@ export class AppController {
     const questions = await this.appService.getQuestions()
     return {
       pageTitle: 'Questions',
-      questions: questions.map((q) => ({
-        id: q.id,
-        title: q.title
-      })),
+      questions: questions.map((q) => ({ id: q.id, title: q.title })),
       ...this.getTimerData()
     }
   }
@@ -192,6 +189,7 @@ export class AppController {
   @Get('leaderboard')
   @Render('leaderboard')
   async getLeaderboard(): Promise<LeaderboardPage> {
+    const questions = (await this.appService.getQuestions()).map((q) => ({ id: q.id, title: q.title }))
     const submissions = await this.appService.getLeaderboard()
     const rows: LeaderboardEntry[] = []
 
@@ -261,6 +259,6 @@ export class AppController {
       return 0
     })
 
-    return { pageTitle: 'Leaderboard', rows: JSON.stringify(rows), ...this.getTimerData() }
+    return { pageTitle: 'Leaderboard', questions, rows: JSON.stringify(rows), ...this.getTimerData() }
   }
 }
